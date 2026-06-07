@@ -108,9 +108,12 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       createDot(map, 'dot-fire', '#FF6B00', 10);
       createDot(map, 'dot-cctv', '#39FF14', 10);
       createDot(map, 'dot-shodan', '#FF00FF', 10);
+      createDot(map, 'dot-recon-mil', '#FF4500', 12);
+      createDot(map, 'dot-recon-intel', '#8B00FF', 12);
+      createDot(map, 'dot-recon-nuc', '#FFD700', 14);
 
       // Sources
-      const sources = ['flights','military','jets','private-fl','satellites','earthquakes','gdelt','gps-jamming','day-night','cctv','shodan-cctv','fires','weather','infrastructure','maritime','maritime-choke','maritime-ships','live-news','sigint-news','conflict-zones', 'war-alerts-targets', 'war-alerts-lines', 'balloons', 'radiation', 'ip-sweep-devices', 'ip-sweep-pulse', 'ip-sweep-connections', 'scan-targets', 'volcanoes', 'storms', 'conflict-events', 'internet-outages', 'cable-points', 'humanitarian', 'mil-bases', 'mil-sats', 'notam-zones', 'sigint-stations', 'apt-groups', 'spyware-ops', 'ripe-probes', 'device-heatmap'];
+      const sources = ['flights','military','jets','private-fl','satellites','earthquakes','gdelt','gps-jamming','day-night','cctv','shodan-cctv','recon-military','recon-intel','recon-nuclear','fires','weather','infrastructure','maritime','maritime-choke','maritime-ships','live-news','sigint-news','conflict-zones', 'war-alerts-targets', 'war-alerts-lines', 'balloons', 'radiation', 'ip-sweep-devices', 'ip-sweep-pulse', 'ip-sweep-connections', 'scan-targets', 'volcanoes', 'storms', 'conflict-events', 'internet-outages', 'cable-points', 'humanitarian', 'mil-bases', 'mil-sats', 'notam-zones', 'sigint-stations', 'apt-groups', 'spyware-ops', 'ripe-probes', 'device-heatmap'];
       sources.forEach(s => map.addSource(s, { type: 'geojson', data: EMPTY_FC }));
 
       // Warning icon generator (parameterized — eliminates 3x copy-paste)
@@ -353,6 +356,45 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       // Shodan CCTV — labels at zoom 10+
       map.addLayer({ id: 'shodan-label', type: 'symbol', source: 'shodan-cctv', minzoom: 10, layout: {
         'text-field': ['get', 'name'], 'text-size': 9, 'text-color': '#FF00FF', 'text-offset': [0, -1.5],
+      }});
+
+      // Recon — Military Bases
+      map.addLayer({ id: 'recon-mil-glow', type: 'circle', source: 'recon-military', paint: {
+        'circle-radius': 18, 'circle-color': '#FF4500', 'circle-opacity': 0.15, 'circle-blur': 1.5,
+      }});
+      map.addLayer({ id: 'recon-mil-dots', type: 'circle', source: 'recon-military', paint: {
+        'circle-radius': 7, 'circle-color': '#FF4500', 'circle-opacity': 0.9,
+        'circle-stroke-width': 2, 'circle-stroke-color': '#FF4500',
+      }});
+      map.addLayer({ id: 'recon-mil-label', type: 'symbol', source: 'recon-military', minzoom: 4, layout: {
+        'text-field': ['get', 'name'], 'text-size': 10, 'text-color': '#FF4500', 'text-offset': [0, -2],
+        'text-font': ['Open Sans Bold'],
+      }});
+
+      // Recon — Intelligence Centers
+      map.addLayer({ id: 'recon-intel-glow', type: 'circle', source: 'recon-intel', paint: {
+        'circle-radius': 18, 'circle-color': '#8B00FF', 'circle-opacity': 0.15, 'circle-blur': 1.5,
+      }});
+      map.addLayer({ id: 'recon-intel-dots', type: 'circle', source: 'recon-intel', paint: {
+        'circle-radius': 7, 'circle-color': '#8B00FF', 'circle-opacity': 0.9,
+        'circle-stroke-width': 2, 'circle-stroke-color': '#8B00FF',
+      }});
+      map.addLayer({ id: 'recon-intel-label', type: 'symbol', source: 'recon-intel', minzoom: 4, layout: {
+        'text-field': ['get', 'name'], 'text-size': 10, 'text-color': '#8B00FF', 'text-offset': [0, -2],
+        'text-font': ['Open Sans Bold'],
+      }});
+
+      // Recon — Nuclear Facilities
+      map.addLayer({ id: 'recon-nuc-glow', type: 'circle', source: 'recon-nuclear', paint: {
+        'circle-radius': 20, 'circle-color': '#FFD700', 'circle-opacity': 0.2, 'circle-blur': 1.5,
+      }});
+      map.addLayer({ id: 'recon-nuc-dots', type: 'circle', source: 'recon-nuclear', paint: {
+        'circle-radius': 8, 'circle-color': '#FFD700', 'circle-opacity': 0.9,
+        'circle-stroke-width': 2, 'circle-stroke-color': '#FFD700',
+      }});
+      map.addLayer({ id: 'recon-nuc-label', type: 'symbol', source: 'recon-nuclear', minzoom: 4, layout: {
+        'text-field': ['get', 'name'], 'text-size': 10, 'text-color': '#FFD700', 'text-offset': [0, -2],
+        'text-font': ['Open Sans Bold'],
       }});
 
       // CCTV — labels at zoom 10+
@@ -643,6 +685,25 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
         stream_type: p?.stream_type, external_url: p?.external_url,
         lat: f.geometry?.coordinates[1], lng: f.geometry?.coordinates[0],
       });
+    });
+
+    // — Recon Military click —
+    map.on('click', 'recon-mil-dots', e => {
+      const f = e.features?.[0]; if (!f) return;
+      const p = f.properties;
+      onEntityClick?.({ type: 'recon', subtype: 'military', id: p?.id, name: p?.name, city: p?.city, country: p?.country, category: p?.category, branch: p?.branch, status: p?.status, source: p?.source, lat: f.geometry?.coordinates[1], lng: f.geometry?.coordinates[0] });
+    });
+    // — Recon Intel click —
+    map.on('click', 'recon-intel-dots', e => {
+      const f = e.features?.[0]; if (!f) return;
+      const p = f.properties;
+      onEntityClick?.({ type: 'recon', subtype: 'intelligence', id: p?.id, name: p?.name, city: p?.city, country: p?.country, category: p?.category, branch: p?.branch, status: p?.status, source: p?.source, lat: f.geometry?.coordinates[1], lng: f.geometry?.coordinates[0] });
+    });
+    // — Recon Nuclear click —
+    map.on('click', 'recon-nuc-dots', e => {
+      const f = e.features?.[0]; if (!f) return;
+      const p = f.properties;
+      onEntityClick?.({ type: 'recon', subtype: 'nuclear', id: p?.id, name: p?.name, city: p?.city, country: p?.country, category: p?.category, branch: p?.branch, status: p?.status, source: p?.source, lat: f.geometry?.coordinates[1], lng: f.geometry?.coordinates[0] });
     });
 
     // ── CCTV (opens CameraViewer panel) ──
