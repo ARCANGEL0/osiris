@@ -25,6 +25,7 @@ const TABS = [
   { id: 'subdomains', label: 'SUBDOMAINS', icon: Layers, placeholder: 'Domain to enumerate', color: '#00BCD4' },
   { id: 'tech', label: 'TECH DETECT', icon: Code, placeholder: 'URL to fingerprint', color: '#9C27B0' },
   { id: 'shodan', label: 'SHODAN IOT', icon: Network, placeholder: 'IP address', color: '#FF3D3D' },
+  { id: 'shodan-search', label: 'SHODAN SEARCH', icon: Network, placeholder: 'Shodan query (e.g. port:8080 country:DE)', color: '#FF3D3D' },
   { id: 'bgp', label: 'BGP ROUTE', icon: Globe, placeholder: 'IP or ASN', color: '#00E5FF' },
   { id: 'mac', label: 'MAC ADDR', icon: Fingerprint, placeholder: 'MAC address', color: '#FFD700' },
   { id: 'phone', label: 'PHONE INTEL', icon: Phone, placeholder: 'Phone number (e.g. +1...)', color: '#FF9500' },
@@ -186,6 +187,7 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
         case 'subdomains': url = `/api/scanner?target=${encodeURIComponent(query)}&type=subdomains`; break;
         case 'tech': url = `/api/scanner?target=${encodeURIComponent(query)}&type=tech`; break;
         case 'shodan': url = `https://internetdb.shodan.io/${encodeURIComponent(query)}`; break;
+        case 'shodan-search': url = `/api/shodan/search?q=${encodeURIComponent(query)}`; break;
         case 'threatfox': url = `/api/osint/threatfox?ioc=${encodeURIComponent(query)}`; break;
         case 'urlhaus': url = `/api/osint/urlhaus?url=${encodeURIComponent(query)}`; break;
         case 'c2check': url = `/api/osint/c2?ip=${encodeURIComponent(query)}`; break;

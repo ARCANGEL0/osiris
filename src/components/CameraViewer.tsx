@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ExternalLink, RefreshCw, MapPin, Camera, Maximize2 } from 'lucide-react';
 import Hls from 'hls.js';
+import { generateCameraUrls } from '@/lib/camera-url-utils';
 
 interface CameraViewerProps {
   camera: any | null;
@@ -20,6 +21,9 @@ export default function CameraViewer({ camera, onClose, onLocate }: CameraViewer
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
+  const [urlIndex, setUrlIndex] = useState(0);
+  const [attemptedUrls, setAttemptedUrls] = useState<string[]>([]);
+  const [cameraUrls, setCameraUrls] = useState<string[]>([]);
 
   const streamType = camera?.stream_type || 'jpg';
   const externalFeedUrl = camera?.external_url || camera?.feed_url;
@@ -30,6 +34,17 @@ export default function CameraViewer({ camera, onClose, onLocate }: CameraViewer
     setLoading(true);
     setError(false);
     setImageUrl(null);
+    setUrlIndex(0);
+    setAttemptedUrls([]);
+
+    // Generate all possible URLs for this camera
+    if (camera.ip && camera.port) {
+      const urls = generateCameraUrls(camera.ip, camera.port, camera.name, camera.org, camera.stream_type);
+      const allUrls = [urls.primary, ...urls.alternatives];
+      setCameraUrls(allUrls);
+    } else if (camera.feed_url) {
+      setCameraUrls([camera.feed_url]);
+    }
 
     // Cleanup previous HLS instance
     if (hlsRef.current) {
@@ -70,10 +85,14 @@ export default function CameraViewer({ camera, onClose, onLocate }: CameraViewer
       return;
     }
 
-    // JPG fallback
-    if (camera.feed_url) {
-      const url = camera.feed_url.includes('?') ? `${camera.feed_url}&_t=${Date.now()}` : `${camera.feed_url}?_t=${Date.now()}`;
-      setImageUrl(url);
+    // JPG fallback - try URLs in sequence
+    if (cameraUrls.length > 0) {
+      const currentUrl = cameraUrls[Math.min(urlIndex, cameraUrls.length - 1)];
+      const separator = currentUrl.includes('?') ? '&' : '?';
+      setImageUrl(`${currentUrl}${separator}_t=${Date.now()}`);
+    } else if (camera.feed_url) {
+      const separator = camera.feed_url.includes('?') ? '&' : '?';
+      setImageUrl(`${camera.feed_url}${separator}_t=${Date.now()}`);
     } else {
       setError(true);
       setLoading(false);
@@ -163,7 +182,7 @@ export default function CameraViewer({ camera, onClose, onLocate }: CameraViewer
                   <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center mb-2 mx-auto"><Camera className="w-4 h-4 text-red-400" /></div>
                   <span className="text-[9px] font-mono text-red-400 tracking-widest block mb-1">FEED UNAVAILABLE</span>
                   <span className="text-[7px] font-mono text-[var(--text-muted)]">Camera may be offline or restricted</span>
-                  <button onClick={() => { setError(false); setRefreshKey(k => k + 1); }} className="block mx-auto mt-3 px-3 py-1 text-[8px] font-mono text-[#39FF14] border border-[#39FF14]/30 rounded hover:bg-[#39FF14]/10 transition-colors tracking-wider">
+                  <button onClick={() => { setError(false); setUrlIndex(0); setAttemptedUrls([]); setRefreshKey(k => k + 1); }} className="block mx-auto mt-3 px-3 py-1 text-[8px] font-mono text-[#39FF14] border border-[#39FF14]/30 rounded hover:bg-[#39FF14]/10 transition-colors tracking-wider">
                     RETRY
                   </button>
                 </div>
@@ -190,7 +209,16 @@ export default function CameraViewer({ camera, onClose, onLocate }: CameraViewer
                 alt={camera.name}
                 className={`w-full ${fullscreen ? 'h-full object-contain' : 'h-full object-cover'}`}
                 onLoad={() => setLoading(false)}
-                onError={() => { setLoading(false); setError(true); }}
+                onError={() => {
+                setLoading(false);
+                // Try next URL if available
+                if (urlIndex < cameraUrls.length - 1) {
+                  setUrlIndex(prev => prev + 1);
+                  setAttemptedUrls(prev => [...prev, cameraUrls[Math.min(urlIndex, cameraUrls.length - 1)]]);
+                } else {
+                  setError(true);
+                }
+              }}
               />
             ) : null}
 
@@ -209,6 +237,9 @@ export default function CameraViewer({ camera, onClose, onLocate }: CameraViewer
           <div className="px-3 md:px-4 py-2 border-t border-[var(--border-secondary)] bg-black/40 flex items-center justify-between">
             <div className="text-[7px] md:text-[8px] font-mono text-[var(--text-muted)]">
               {camera.lat?.toFixed(4)}, {camera.lng?.toFixed(4)}
+              {cameraUrls.length > 1 && (
+                <span className="ml-2 text-[#FF00FF]">URL {Math.min(urlIndex + 1, cameraUrls.length)}/{cameraUrls.length}</span>
+              )}
             </div>
             <div className="flex gap-2">
               {(camera.feed_url || camera.external_url) && (
