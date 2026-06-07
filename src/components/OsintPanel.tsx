@@ -11,6 +11,14 @@ import {
   Skull,
 } from 'lucide-react';
 import { ipToNumber, numberToIp, calculateSubnetStart, classifyDevice, assessRisk, batchFetch, ShodanInternetDBResponse, SweepDevice } from '@/lib/osint-utils';
+import DossierPanel from '@/components/DossierPanel';
+import ThreatGauge from '@/components/ThreatGauge';
+import PatternViewer from '@/components/PatternViewer';
+import CorrelationPanel from '@/components/CorrelationPanel';
+import LinkGraph from '@/components/LinkGraph';
+import BulkScanner from '@/components/BulkScanner';
+import AlertManager from '@/components/AlertManager';
+import { GitBranch, Bell } from 'lucide-react';
 
 const TABS = [
   { id: 'scanner', label: 'PORT SCAN', icon: Radar, placeholder: 'IP or hostname', color: '#00E5FF' },
@@ -48,6 +56,13 @@ const TABS = [
   { id: 'otx', label: 'OTX INTEL', icon: ShieldAlert, placeholder: 'IP, domain, URL, or hash', color: '#FF6B00' },
   { id: 'virustotal', label: 'VIRUSTOTAL', icon: Bug, placeholder: 'IP, domain, URL, or hash', color: '#2196F3' },
   { id: 'sweep', label: 'IP SWEEP', icon: Crosshair, placeholder: 'Enter IP address (e.g. 8.8.8.8)', color: '#FF3D3D' },
+  { id: 'dossier', label: 'DOSSIER', icon: Crosshair, placeholder: 'IP, domain, or entity name', color: '#FF4500' },
+  { id: 'threat-score', label: 'THREAT SCORE', icon: Shield, placeholder: 'IP address', color: '#FF0000' },
+  { id: 'patterns', label: 'PATTERNS', icon: Layers, placeholder: 'Click to analyze patterns', color: '#448AFF' },
+  { id: 'correlate', label: 'CORRELATE', icon: GitBranch, placeholder: 'Lat,Lng from map or IP', color: '#FFD700' },
+  { id: 'link-graph', label: 'LINK GRAPH', icon: Network, placeholder: 'Seed IP or entity', color: '#8B00FF' },
+  { id: 'bulk-scan', label: 'BULK SCAN', icon: Radar, placeholder: 'Multiple Shodan queries', color: '#FF3D3D' },
+  { id: 'alerts', label: 'ALERTS', icon: Bell, placeholder: 'Manage alert rules', color: '#FF9500' },
 ];
 
 interface OsintPanelProps { isOpen?: boolean; onClose?: () => void; isMobile?: boolean; onSweepVisualize?: (data: any) => void; onScanGeolocate?: (target: string, data: any) => void; }
@@ -1351,6 +1366,43 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
           <div className="px-3 py-2 border-t border-[#2A2A28]">
             <div className="text-[8px] font-mono text-[#5C5A54] tracking-wider">SWEPT {sweepResult.summary.total_hosts} HOSTS IN {(sweepResult.sweep_time_ms / 1000).toFixed(1)}s · ASN {sweepResult.center.asn}</div>
           </div>
+        </div>
+      )}
+
+      {/* Palantir Panels - full component rendering */}
+      {activeTab === 'dossier' && (
+        <div className="flex-1 min-h-0">
+          <DossierPanel onClose={() => { setActiveTab('scanner'); setResults(null); }} />
+        </div>
+      )}
+      {activeTab === 'threat-score' && (
+        <div className="flex-1 min-h-0">
+          <ThreatGauge onClose={() => { setActiveTab('scanner'); setResults(null); }} />
+        </div>
+      )}
+      {activeTab === 'patterns' && (
+        <div className="flex-1 min-h-0">
+          <PatternViewer />
+        </div>
+      )}
+      {activeTab === 'correlate' && (
+        <div className="flex-1 min-h-0">
+          <CorrelationPanel onClose={() => { setActiveTab('scanner'); setResults(null); }} />
+        </div>
+      )}
+      {activeTab === 'link-graph' && (
+        <div className="flex-1 min-h-0">
+          <LinkGraph onClose={() => { setActiveTab('scanner'); setResults(null); }} />
+        </div>
+      )}
+      {activeTab === 'bulk-scan' && (
+        <div className="flex-1 min-h-0">
+          <BulkScanner />
+        </div>
+      )}
+      {activeTab === 'alerts' && (
+        <div className="flex-1 min-h-0">
+          <AlertManager />
         </div>
       )}
 
