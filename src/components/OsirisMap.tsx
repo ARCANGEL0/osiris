@@ -107,9 +107,10 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       createDot(map, 'dot-green', '#00E676', 10);
       createDot(map, 'dot-fire', '#FF6B00', 10);
       createDot(map, 'dot-cctv', '#39FF14', 10);
+      createDot(map, 'dot-shodan', '#FF00FF', 10);
 
       // Sources
-      const sources = ['flights','military','jets','private-fl','satellites','earthquakes','gdelt','gps-jamming','day-night','cctv','fires','weather','infrastructure','maritime','maritime-choke','maritime-ships','live-news','sigint-news','conflict-zones', 'war-alerts-targets', 'war-alerts-lines', 'balloons', 'radiation', 'ip-sweep-devices', 'ip-sweep-pulse', 'ip-sweep-connections', 'scan-targets'];
+      const sources = ['flights','military','jets','private-fl','satellites','earthquakes','gdelt','gps-jamming','day-night','cctv','shodan-cctv','fires','weather','infrastructure','maritime','maritime-choke','maritime-ships','live-news','sigint-news','conflict-zones', 'war-alerts-targets', 'war-alerts-lines', 'balloons', 'radiation', 'ip-sweep-devices', 'ip-sweep-pulse', 'ip-sweep-connections', 'scan-targets', 'volcanoes', 'storms', 'conflict-events', 'internet-outages', 'cable-points', 'humanitarian', 'mil-bases', 'mil-sats', 'notam-zones', 'sigint-stations', 'apt-groups', 'spyware-ops', 'ripe-probes', 'device-heatmap'];
       sources.forEach(s => map.addSource(s, { type: 'geojson', data: EMPTY_FC }));
 
       // Warning icon generator (parameterized — eliminates 3x copy-paste)
@@ -134,6 +135,166 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       createWarningIcon('warn-icon', '#FF1744');
       createWarningIcon('warn-orange', '#FF9500');
       createWarningIcon('warn-yellow', '#FFD500');
+
+      // Volcanoes
+      map.addLayer({ id: 'volcano-glow', type: 'circle', source: 'volcanoes', paint: { 'circle-radius': 18, 'circle-color': '#FF6B35', 'circle-opacity': 0.1, 'circle-blur': 1 }});
+      map.addLayer({ id: 'volcano-dots', type: 'circle', source: 'volcanoes', paint: {
+        'circle-radius': ['interpolate',['linear'],['zoom'], 1,5, 5,8, 10,12],
+        'circle-color': ['match',['get','alert_level'],'Red','#FF1744','Orange','#FF6B35','Yellow','#FFD700','#76FF03'],
+        'circle-opacity': 0.9, 'circle-stroke-width': 2, 'circle-stroke-color': '#FF6B35', 'circle-stroke-opacity': 0.5,
+      }});
+      map.addLayer({ id: 'volcano-label', type: 'symbol', source: 'volcanoes', minzoom: 3, layout: {
+        'text-field': ['concat','🌋 ',['get','name']], 'text-size': 9, 'text-font': ['Open Sans Regular'], 'text-offset': [0, 2], 'text-allow-overlap': false,
+      }, paint: { 'text-color': '#FF6B35', 'text-halo-color': '#000', 'text-halo-width': 1 }});
+
+      // Tropical Storms
+      map.addLayer({ id: 'storm-glow', type: 'circle', source: 'storms', paint: { 'circle-radius': 40, 'circle-color': '#00BCD4', 'circle-opacity': 0.07, 'circle-blur': 1 }});
+      map.addLayer({ id: 'storm-dots', type: 'circle', source: 'storms', paint: {
+        'circle-radius': ['interpolate',['linear'],['zoom'], 1,8, 5,12, 10,18],
+        'circle-color': '#00BCD4', 'circle-opacity': 0.85, 'circle-stroke-width': 2, 'circle-stroke-color': '#00BCD4', 'circle-stroke-opacity': 0.5,
+      }});
+      map.addLayer({ id: 'storm-label', type: 'symbol', source: 'storms', layout: {
+        'text-field': ['concat','🌀 ',['get','name']], 'text-size': 10, 'text-font': ['Open Sans Bold'], 'text-offset': [0, 2.2], 'text-allow-overlap': true,
+      }, paint: { 'text-color': '#00BCD4', 'text-halo-color': '#000', 'text-halo-width': 1.5 }});
+
+      // Armed Conflict Events
+      map.addLayer({ id: 'conflict-event-glow', type: 'circle', source: 'conflict-events', paint: { 'circle-radius': 10, 'circle-color': '#FF1744', 'circle-opacity': 0.1, 'circle-blur': 1 }});
+      map.addLayer({ id: 'conflict-event-dots', type: 'circle', source: 'conflict-events', paint: {
+        'circle-radius': 4, 'circle-color': '#FF1744', 'circle-opacity': 0.75, 'circle-stroke-width': 1, 'circle-stroke-color': '#FF1744', 'circle-stroke-opacity': 0.4,
+      }});
+
+      // Internet Outages
+      map.addLayer({ id: 'outage-glow', type: 'circle', source: 'internet-outages', paint: { 'circle-radius': 30, 'circle-color': '#2196F3', 'circle-opacity': 0.08, 'circle-blur': 1 }});
+      map.addLayer({ id: 'outage-dots', type: 'circle', source: 'internet-outages', paint: {
+        'circle-radius': 7, 'circle-color': '#2196F3', 'circle-opacity': 0.8, 'circle-stroke-width': 2, 'circle-stroke-color': '#2196F3', 'circle-stroke-opacity': 0.5,
+      }});
+      map.addLayer({ id: 'outage-label', type: 'symbol', source: 'internet-outages', minzoom: 3, layout: {
+        'text-field': ['get','location'], 'text-size': 8, 'text-font': ['Open Sans Regular'], 'text-offset': [0, 1.8],
+      }, paint: { 'text-color': '#2196F3', 'text-halo-color': '#000', 'text-halo-width': 1 }});
+
+      // Submarine Cable Landing Points
+      map.addLayer({ id: 'cable-glow', type: 'circle', source: 'cable-points', paint: { 'circle-radius': 8, 'circle-color': '#00E5FF', 'circle-opacity': 0.1, 'circle-blur': 1 }});
+      map.addLayer({ id: 'cable-dots', type: 'circle', source: 'cable-points', paint: {
+        'circle-radius': 4, 'circle-color': '#00E5FF', 'circle-opacity': 0.8, 'circle-stroke-width': 1, 'circle-stroke-color': '#00E5FF', 'circle-stroke-opacity': 0.5,
+      }});
+
+      // Humanitarian Alerts
+      map.addLayer({ id: 'humanitarian-glow', type: 'circle', source: 'humanitarian', paint: { 'circle-radius': 14, 'circle-color': '#FF9500', 'circle-opacity': 0.1, 'circle-blur': 1 }});
+      map.addLayer({ id: 'humanitarian-dots', type: 'circle', source: 'humanitarian', paint: {
+        'circle-radius': 5, 'circle-color': '#FF9500', 'circle-opacity': 0.75, 'circle-stroke-width': 1, 'circle-stroke-color': '#FF9500', 'circle-stroke-opacity': 0.4,
+      }});
+
+      // Military Satellites
+      createDot(map, 'dot-milsat', '#FF3D3D', 8);
+      map.addLayer({ id: 'milsat-glow', type: 'circle', source: 'mil-sats', paint: {
+        'circle-radius': 12, 'circle-color': '#FF3D3D', 'circle-opacity': 0.08, 'circle-blur': 1,
+      }});
+      map.addLayer({ id: 'milsat-dots', type: 'circle', source: 'mil-sats', paint: {
+        'circle-radius': ['interpolate',['linear'],['zoom'], 1,3, 5,5, 10,8],
+        'circle-color': ['match',['get','nation'],'US','#FF1744','Russia','#FF6B00','China','#FFD700','#E040FB'],
+        'circle-opacity': 0.9, 'circle-stroke-width': 1, 'circle-stroke-color': '#FF3D3D', 'circle-stroke-opacity': 0.5,
+      }});
+      map.addLayer({ id: 'milsat-label', type: 'symbol', source: 'mil-sats', minzoom: 4, layout: {
+        'text-field': ['get','name'], 'text-size': 8, 'text-font': ['Open Sans Regular'], 'text-offset': [0, 1.5], 'text-allow-overlap': false,
+      }, paint: { 'text-color': '#FF3D3D', 'text-halo-color': '#000', 'text-halo-width': 1 }});
+
+      // NOTAM / Restricted Airspace
+      map.addLayer({ id: 'notam-fill', type: 'circle', source: 'notam-zones', paint: {
+        'circle-radius': ['interpolate',['linear'],['zoom'], 1,12, 5,25, 10,50],
+        'circle-color': ['match',['get','type'],'tfr','#FF9500','military','#FF1744','prohibited','#FF1744','#FFD700'],
+        'circle-opacity': 0.12, 'circle-blur': 0.5,
+      }});
+      map.addLayer({ id: 'notam-border', type: 'circle', source: 'notam-zones', paint: {
+        'circle-radius': ['interpolate',['linear'],['zoom'], 1,12, 5,25, 10,50],
+        'circle-color': 'transparent', 'circle-stroke-width': 1.5,
+        'circle-stroke-color': ['match',['get','type'],'tfr','#FF9500','military','#FF1744','prohibited','#FF1744','#FFD700'],
+        'circle-stroke-opacity': 0.6,
+      }});
+      map.addLayer({ id: 'notam-label', type: 'symbol', source: 'notam-zones', minzoom: 5, layout: {
+        'text-field': ['get','name'], 'text-size': 8, 'text-font': ['Open Sans Regular'], 'text-offset': [0, 0], 'text-allow-overlap': false,
+      }, paint: { 'text-color': '#FF9500', 'text-halo-color': '#000', 'text-halo-width': 1 }});
+
+      // Military Bases — color-coded by operator classification
+      createDot(map, 'dot-mil-us', '#FF1744', 10);
+      createDot(map, 'dot-mil-ru', '#FF6B00', 10);
+      createDot(map, 'dot-mil-cn', '#FFD700', 10);
+      createDot(map, 'dot-mil-nato', '#448AFF', 10);
+      createDot(map, 'dot-mil-other', '#9C27B0', 10);
+      map.addLayer({ id: 'mil-base-glow', type: 'circle', source: 'mil-bases', paint: {
+        'circle-radius': ['interpolate',['linear'],['zoom'], 1,8, 5,14, 10,20],
+        'circle-color': ['match',['get','classification'],'US','#FF1744','Russia','#FF6B00','China','#FFD700','NATO','#448AFF','Five Eyes','#00E676','#9C27B0'],
+        'circle-opacity': 0.07, 'circle-blur': 1,
+      }});
+      map.addLayer({ id: 'mil-base-dots', type: 'circle', source: 'mil-bases', paint: {
+        'circle-radius': ['interpolate',['linear'],['zoom'], 1,3, 5,5, 10,8],
+        'circle-color': ['match',['get','classification'],'US','#FF1744','Russia','#FF6B00','China','#FFD700','NATO','#448AFF','Five Eyes','#00E676','Israel','#00BCD4','UK','#76FF03','Iran','#FF9500','DPRK','#E040FB','#9C27B0'],
+        'circle-stroke-width': 1.5,
+        'circle-stroke-color': ['match',['get','classification'],'US','#FF1744','Russia','#FF6B00','China','#FFD700','NATO','#448AFF','Five Eyes','#00E676','#9C27B0'],
+        'circle-stroke-opacity': 0.6,
+      }});
+      map.addLayer({ id: 'mil-base-label', type: 'symbol', source: 'mil-bases', minzoom: 5, layout: {
+        'text-field': ['get','name'], 'text-size': 8, 'text-font': ['Open Sans Regular'], 'text-offset': [0, 1.6], 'text-allow-overlap': false, 'text-max-width': 10,
+      }, paint: { 'text-color': '#FF1744', 'text-halo-color': '#000', 'text-halo-width': 1, 'text-opacity': 0.8 }});
+
+      // SIGINT Stations
+      map.addLayer({ id: 'sigint-glow', type: 'circle', source: 'sigint-stations', paint: {
+        'circle-radius': 16, 'circle-color': '#FF9500', 'circle-opacity': 0.12, 'circle-blur': 1,
+      }});
+      map.addLayer({ id: 'sigint-dots', type: 'circle', source: 'sigint-stations', paint: {
+        'circle-radius': ['interpolate',['linear'],['zoom'], 1,4, 5,7, 10,11],
+        'circle-color': '#FF9500', 'circle-opacity': 0.9,
+        'circle-stroke-width': 2, 'circle-stroke-color': '#FF9500', 'circle-stroke-opacity': 0.5,
+      }});
+      map.addLayer({ id: 'sigint-label', type: 'symbol', source: 'sigint-stations', minzoom: 4, layout: {
+        'text-field': ['get','name'], 'text-size': 8, 'text-font': ['Open Sans Regular'], 'text-offset': [0, 1.8], 'text-allow-overlap': false,
+      }, paint: { 'text-color': '#FF9500', 'text-halo-color': '#000', 'text-halo-width': 1 }});
+
+      // APT Groups
+      map.addLayer({ id: 'apt-glow', type: 'circle', source: 'apt-groups', paint: {
+        'circle-radius': 20, 'circle-color': '#E040FB', 'circle-opacity': 0.08, 'circle-blur': 1,
+      }});
+      map.addLayer({ id: 'apt-dots', type: 'circle', source: 'apt-groups', paint: {
+        'circle-radius': ['interpolate',['linear'],['zoom'], 1,5, 5,8, 10,12],
+        'circle-color': ['match',['get','tlp_color'],'#FF1744','#FF1744','#FF9500','#FF9500','#FFD700','#FFD700','#E040FB'],
+        'circle-opacity': 0.85,
+        'circle-stroke-width': 2, 'circle-stroke-color': '#E040FB', 'circle-stroke-opacity': 0.4,
+      }});
+      map.addLayer({ id: 'apt-label', type: 'symbol', source: 'apt-groups', minzoom: 3, layout: {
+        'text-field': ['get','name'], 'text-size': 9, 'text-font': ['Open Sans Bold'], 'text-offset': [0, 1.8], 'text-allow-overlap': false,
+      }, paint: { 'text-color': '#E040FB', 'text-halo-color': '#000', 'text-halo-width': 1.5 }});
+
+      // Spyware Infrastructure
+      map.addLayer({ id: 'spyware-glow', type: 'circle', source: 'spyware-ops', paint: {
+        'circle-radius': 18, 'circle-color': '#FF3D3D', 'circle-opacity': 0.1, 'circle-blur': 1,
+      }});
+      map.addLayer({ id: 'spyware-dots', type: 'circle', source: 'spyware-ops', paint: {
+        'circle-radius': ['interpolate',['linear'],['zoom'], 1,4, 5,7, 10,11],
+        'circle-color': ['match',['get','status'],'sanctioned','#FF1744','defunct','#757575','#FF3D3D'],
+        'circle-stroke-width': 2, 'circle-stroke-color': '#FF3D3D', 'circle-stroke-opacity': 0.5,
+      }});
+      map.addLayer({ id: 'spyware-label', type: 'symbol', source: 'spyware-ops', minzoom: 4, layout: {
+        'text-field': ['concat','🕵 ',['get','name']], 'text-size': 9, 'text-font': ['Open Sans Regular'], 'text-offset': [0, 1.8], 'text-allow-overlap': false,
+      }, paint: { 'text-color': '#FF3D3D', 'text-halo-color': '#000', 'text-halo-width': 1 }});
+
+      // ── RIPE Atlas internet measurement nodes (14k+ tiny cyan dots) ──
+      map.addLayer({ id: 'ripe-dots', type: 'circle', source: 'ripe-probes', paint: {
+        'circle-radius': ['interpolate',['linear'],['zoom'], 1,1.5, 5,2.5, 10,4],
+        'circle-color': ['case', ['get','is_anchor'], '#FFD700', '#00E5FF'],
+        'circle-opacity': 0.7,
+        'circle-stroke-width': ['case', ['get','is_anchor'], 1, 0],
+        'circle-stroke-color': '#FFD700',
+      }});
+
+      // ── Device exposure heatmap — graduated by device count ──
+      map.addLayer({ id: 'device-heat', type: 'circle', source: 'device-heatmap', paint: {
+        'circle-radius': ['interpolate',['linear'],['get','count'], 10,6, 10000,18, 500000,40],
+        'circle-color': ['get','color'],
+        'circle-opacity': 0.18, 'circle-blur': 0.8,
+      }});
+      map.addLayer({ id: 'device-core', type: 'circle', source: 'device-heatmap', paint: {
+        'circle-radius': ['interpolate',['linear'],['get','count'], 10,2, 10000,5, 500000,9],
+        'circle-color': ['get','color'], 'circle-opacity': 0.85,
+      }});
 
       map.addLayer({ id: 'conflict-icons', type: 'symbol', source: 'conflict-zones', layout: {
         'icon-image': ['match', ['get','severity'], 'war','warn-icon', 'high','warn-orange', 'warn-yellow'],
@@ -180,6 +341,20 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
         'circle-color': '#39FF14', 'circle-opacity': 0.8,
         'circle-stroke-width': 2, 'circle-stroke-color': '#39FF14', 'circle-stroke-opacity': 0.5,
       }});
+      // Shodan CCTV — outer glow ring
+      map.addLayer({ id: 'shodan-glow', type: 'circle', source: 'shodan-cctv', paint: {
+        'circle-radius': 14, 'circle-color': '#FF00FF', 'circle-opacity': 0.15, 'circle-blur': 1.5,
+      }});
+      // Shodan CCTV — main dot
+      map.addLayer({ id: 'shodan-dots', type: 'circle', source: 'shodan-cctv', paint: {
+        'circle-radius': 5, 'circle-color': '#FF00FF', 'circle-opacity': 0.9,
+        'circle-stroke-width': 1, 'circle-stroke-color': '#FF00FF',
+      }});
+      // Shodan CCTV — labels at zoom 10+
+      map.addLayer({ id: 'shodan-label', type: 'symbol', source: 'shodan-cctv', minzoom: 10, layout: {
+        'text-field': ['get', 'name'], 'text-size': 9, 'text-color': '#FF00FF', 'text-offset': [0, -1.5],
+      }});
+
       // CCTV — labels at zoom 10+
       map.addLayer({ id: 'cctv-label', type: 'symbol', source: 'cctv', minzoom: 10, layout: {
         'text-field': ['get','name'], 'text-size': 9, 'text-font': ['Open Sans Regular'],
@@ -454,6 +629,20 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       });
       map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = ''; });
+    });
+
+    // ── Shodan CCTV (opens CameraViewer panel) ──
+    map.on('click', 'shodan-dots', e => {
+      const f = e.features?.[0];
+      if (!f) return;
+      const p = f.properties;
+      onEntityClick?.({
+        type: 'shodan',
+        id: p?.id, name: p?.name, city: p?.city, country: p?.country,
+        source: p?.source, feed_url: p?.feed_url, stream_url: p?.stream_url,
+        stream_type: p?.stream_type, external_url: p?.external_url,
+        lat: f.geometry?.coordinates[1], lng: f.geometry?.coordinates[0],
+      });
     });
 
     // ── CCTV (opens CameraViewer panel) ──
@@ -760,6 +949,259 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       </div>`);
     });
 
+    // ── Military Satellites ──
+    map.on('click', 'milsat-dots', e => {
+      if (!e.features?.length) return;
+      const p = e.features[0].properties as any;
+      const coords = (e.features[0].geometry as any).coordinates;
+      const natColors: Record<string,string> = { US:'#FF1744', Russia:'#FF6B00', China:'#FFD700', Israel:'#00BCD4', India:'#FF9500' };
+      const col = natColors[p.nation] || '#E040FB';
+      popup(coords, `<div style="${pStyle}border:1px solid ${col}40;">
+        <div style="color:${col};font-size:13px;font-weight:700;margin-bottom:3px;">🛰 ${p.name}</div>
+        <div style="font-size:9px;color:#aaa;margin-bottom:8px;">${p.nation} — ${p.mission}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:9px;">
+          <div><span style="color:#5C5A54;">ALTITUDE</span><br/><span style="color:${col};font-weight:bold;">${p.alt?.toLocaleString()} km</span></div>
+          <div><span style="color:#5C5A54;">NORAD</span><br/><span style="color:#E8E6E0;">${p.noradId}</span></div>
+          <div><span style="color:#5C5A54;">POSITION</span><br/><span style="color:#E8E6E0;">${coords[1].toFixed(3)}°, ${coords[0].toFixed(3)}°</span></div>
+          <div><span style="color:#5C5A54;">MISSION</span><br/><span style="color:${col};">${p.mission}</span></div>
+        </div>
+        <a href="https://www.n2yo.com/satellite/?s=${p.noradId}" target="_blank" style="${linkStyle}margin-top:8px;color:${col};border:1px solid ${col}40;background:${col}15;">N2YO TRACK</a>
+      </div>`);
+    });
+
+    // ── NOTAM / Restricted Airspace ──
+    map.on('click', 'notam-border', e => {
+      if (!e.features?.length) return;
+      const p = e.features[0].properties as any;
+      const coords = (e.features[0].geometry as any).coordinates;
+      const typeColors: Record<string,string> = { tfr:'#FF9500', military:'#FF1744', prohibited:'#FF1744', restricted:'#FFD700', warning:'#FF6B00' };
+      const col = typeColors[p.type] || '#FF9500';
+      popup(coords, `<div style="${pStyle}border:1px solid ${col}40;">
+        <div style="color:${col};font-size:12px;font-weight:700;margin-bottom:3px;">⚠️ ${p.name}</div>
+        <div style="font-size:9px;color:#aaa;margin-bottom:8px;">${(p.type||'').toUpperCase()} — ${p.source}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:9px;">
+          ${p.alt_floor_ft !== undefined ? `<div><span style="color:#5C5A54;">FLOOR</span><br/><span style="color:#E8E6E0;">${p.alt_floor_ft} ft</span></div>` : ''}
+          ${p.alt_ceiling_ft !== undefined ? `<div><span style="color:#5C5A54;">CEILING</span><br/><span style="color:#E8E6E0;">${p.alt_ceiling_ft} ft</span></div>` : ''}
+          ${p.radius_nm !== undefined ? `<div><span style="color:#5C5A54;">RADIUS</span><br/><span style="color:${col};">${p.radius_nm} NM</span></div>` : ''}
+          ${p.effective_end ? `<div><span style="color:#5C5A54;">EXPIRES</span><br/><span style="color:#E8E6E0;">${p.effective_end?.slice(0,16)}</span></div>` : ''}
+        </div>
+        ${p.reason ? `<div style="margin-top:6px;font-size:9px;color:#8A8880;">${p.reason}</div>` : ''}
+      </div>`);
+    });
+
+    // ── Military Bases ──
+    map.on('click', 'mil-base-dots', e => {
+      if (!e.features?.length) return;
+      const p = e.features[0].properties as any;
+      const coords = (e.features[0].geometry as any).coordinates;
+      const clsColors: Record<string, string> = { US: '#FF1744', Russia: '#FF6B00', China: '#FFD700', NATO: '#448AFF', 'Five Eyes': '#00E676', Israel: '#00BCD4', UK: '#76FF03', Iran: '#FF9500', DPRK: '#E040FB', France: '#87CEEB' };
+      const col = clsColors[p.classification] || '#9C27B0';
+      const typeEmoji: Record<string, string> = { air_base: '✈️', naval_base: '⚓', army_base: '🪖', intelligence: '🔍', sigint: '📡', nuclear: '☢️', missile: '🚀', command: '🎯', space: '🛸', cyber: '💻', drone: '🤖' };
+      const emoji = typeEmoji[p.type] || '🏛️';
+      popup(coords, `<div style="${pStyle}border:1px solid ${col}40;">
+        <div style="color:${col};font-size:13px;font-weight:700;margin-bottom:3px;">${emoji} ${p.name}</div>
+        <div style="font-size:9px;color:#aaa;margin-bottom:8px;">${p.type?.replace(/_/g,' ').toUpperCase()} — ${p.country}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:9px;">
+          <div><span style="color:#5C5A54;">OPERATOR</span><br/><span style="color:${col};font-weight:bold;">${p.classification}</span></div>
+          <div><span style="color:#5C5A54;">OPERATED BY</span><br/><span style="color:#E8E6E0;">${p.operator}</span></div>
+        </div>
+        ${p.notes ? `<div style="margin-top:8px;font-size:9px;color:#8A8880;line-height:1.4;">${p.notes}</div>` : ''}
+        <a href="https://www.google.com/maps/@${coords[1]},${coords[0]},14z/data=!3m1!1e3" target="_blank" style="${linkStyle}margin-top:8px;color:#76FF03;border:1px solid rgba(118,255,3,0.4);background:rgba(118,255,3,0.1);">SATELLITE VIEW</a>
+      </div>`);
+    });
+
+    // ── SIGINT Stations ──
+    map.on('click', 'sigint-dots', e => {
+      if (!e.features?.length) return;
+      const p = e.features[0].properties as any;
+      const coords = (e.features[0].geometry as any).coordinates;
+      popup(coords, `<div style="${pStyle}border:1px solid rgba(255,149,0,0.4);">
+        <div style="color:#FF9500;font-size:13px;font-weight:700;margin-bottom:3px;">📡 ${p.name}</div>
+        <div style="font-size:9px;color:#aaa;margin-bottom:8px;">${p.type?.toUpperCase()} — ${p.nation}</div>
+        <div style="display:grid;grid-template-columns:1fr;gap:5px;font-size:9px;">
+          <div><span style="color:#5C5A54;">OPERATOR</span><br/><span style="color:#FF9500;font-weight:bold;">${p.operator}</span></div>
+          ${p.program ? `<div><span style="color:#5C5A54;">PROGRAM</span><br/><span style="color:#E8E6E0;">${p.program}</span></div>` : ''}
+          <div><span style="color:#5C5A54;">TARGETS</span><br/><span style="color:#aaa;">${p.targets}</span></div>
+          ${p.notes ? `<div><span style="color:#5C5A54;">NOTES</span><br/><span style="color:#8A8880;">${p.notes}</span></div>` : ''}
+        </div>
+        <a href="https://www.google.com/maps/@${coords[1]},${coords[0]},14z/data=!3m1!1e3" target="_blank" style="${linkStyle}margin-top:8px;color:#FF9500;border:1px solid rgba(255,149,0,0.4);background:rgba(255,149,0,0.1);">SATELLITE VIEW</a>
+      </div>`);
+    });
+
+    // ── APT Groups ──
+    map.on('click', 'apt-dots', e => {
+      if (!e.features?.length) return;
+      const p = e.features[0].properties as any;
+      const coords = (e.features[0].geometry as any).coordinates;
+      const aliases = typeof p.aliases === 'string' ? JSON.parse(p.aliases || '[]') : (p.aliases || []);
+      popup(coords, `<div style="${pStyle}border:1px solid rgba(224,64,251,0.4);">
+        <div style="color:#E040FB;font-size:13px;font-weight:700;margin-bottom:3px;">🎭 ${p.name}</div>
+        <div style="font-size:9px;color:#aaa;margin-bottom:8px;">${p.sponsor} — ${p.nation}</div>
+        <div style="font-size:8px;color:#9C27B0;margin-bottom:6px;font-family:monospace;">${aliases.join(' · ')}</div>
+        <div style="display:grid;grid-template-columns:1fr;gap:5px;font-size:9px;">
+          <div><span style="color:#5C5A54;">ACTIVE SINCE</span><br/><span style="color:#E8E6E0;">${p.active_since}</span></div>
+          <div><span style="color:#5C5A54;">PRIMARY TARGETS</span><br/><span style="color:#E040FB;">${p.primary_targets}</span></div>
+          <div><span style="color:#5C5A54;">KNOWN TOOLS</span><br/><span style="color:#aaa;">${p.known_tools}</span></div>
+          <div><span style="color:#5C5A54;">NOTABLE OPS</span><br/><span style="color:#FF9500;">${p.notable_ops}</span></div>
+        </div>
+      </div>`);
+    });
+
+    // ── Spyware Infrastructure ──
+    map.on('click', 'spyware-dots', e => {
+      if (!e.features?.length) return;
+      const p = e.features[0].properties as any;
+      const coords = (e.features[0].geometry as any).coordinates;
+      const statusCol = p.status === 'sanctioned' ? '#FF1744' : p.status === 'defunct' ? '#757575' : '#FF3D3D';
+      const customers = typeof p.known_customers === 'string' ? JSON.parse(p.known_customers || '[]') : (p.known_customers || []);
+      popup(coords, `<div style="${pStyle}border:1px solid ${statusCol}40;">
+        <div style="color:${statusCol};font-size:13px;font-weight:700;margin-bottom:3px;">🕵 ${p.name}</div>
+        <div style="font-size:9px;color:#aaa;margin-bottom:8px;">${p.spyware_name} — ${p.country}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:9px;">
+          <div><span style="color:#5C5A54;">STATUS</span><br/><span style="color:${statusCol};font-weight:bold;">${(p.status || '').toUpperCase()}</span></div>
+          <div><span style="color:#5C5A54;">TARGET OS</span><br/><span style="color:#E8E6E0;">${p.target_os}</span></div>
+          <div><span style="color:#5C5A54;">EXPOSED BY</span><br/><span style="color:#aaa;">${p.exposed_by}</span></div>
+          <div><span style="color:#5C5A54;">YEAR EXPOSED</span><br/><span style="color:#E8E6E0;">${p.exposure_date}</span></div>
+        </div>
+        ${customers.length > 0 ? `<div style="margin-top:8px;font-size:9px;"><span style="color:#5C5A54;">KNOWN CUSTOMERS:</span><br/><span style="color:#FF9500;">${customers.slice(0,8).join(', ')}${customers.length > 8 ? ' +more' : ''}</span></div>` : ''}
+        ${p.notes ? `<div style="margin-top:6px;font-size:8px;color:#8A8880;">${p.notes}</div>` : ''}
+      </div>`);
+    });
+
+    // ── RIPE Atlas probe ──
+    map.on('click', 'ripe-dots', e => {
+      if (!e.features?.length) return;
+      const p = e.features[0].properties as any;
+      const coords = (e.features[0].geometry as any).coordinates;
+      const col = p.is_anchor ? '#FFD700' : '#00E5FF';
+      popup(coords, `<div style="${pStyle}border:1px solid ${col}40;">
+        <div style="color:${col};font-size:12px;font-weight:700;margin-bottom:3px;">🌐 RIPE Atlas Probe #${p.probe_id}${p.is_anchor ? ' (ANCHOR)' : ''}</div>
+        <div style="font-size:9px;color:#aaa;margin-bottom:6px;">${p.description || ''}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:9px;">
+          <div><span style="color:#5C5A54;">COUNTRY</span><br/><span style="color:#E8E6E0;">${p.country || '—'}</span></div>
+          <div><span style="color:#5C5A54;">ASN</span><br/><span style="color:${col};">AS${p.asn || '—'}</span></div>
+        </div>
+        <a href="https://atlas.ripe.net/probes/${p.probe_id}/" target="_blank" style="${linkStyle}margin-top:8px;color:${col};border:1px solid ${col}40;background:${col}15;">VIEW ON RIPE ATLAS</a>
+      </div>`);
+    });
+
+    // ── Device exposure heatmap ──
+    map.on('click', 'device-core', e => {
+      if (!e.features?.length) return;
+      const p = e.features[0].properties as any;
+      const coords = (e.features[0].geometry as any).coordinates;
+      const sevCol = p.severity === 'critical' ? '#FF1744' : p.severity === 'high' ? '#FF9500' : p.severity === 'medium' ? '#FFD700' : '#39FF14';
+      popup(coords, `<div style="${pStyle}border:1px solid ${p.color}40;">
+        <div style="color:${p.color};font-size:12px;font-weight:700;margin-bottom:3px;">💻 ${p.category_label}</div>
+        <div style="font-size:9px;color:#aaa;margin-bottom:6px;">Country: ${p.country}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:9px;">
+          <div><span style="color:#5C5A54;">EXPOSED HERE</span><br/><span style="color:${p.color};font-weight:bold;font-size:13px;">${Number(p.count).toLocaleString()}</span></div>
+          <div><span style="color:#5C5A54;">SEVERITY</span><br/><span style="color:${sevCol};font-weight:bold;">${(p.severity || '').toUpperCase()}</span></div>
+        </div>
+        <div style="margin-top:6px;font-size:8px;color:#8A8880;">${Number(p.total_in_category).toLocaleString()} total globally · Source: Shodan</div>
+      </div>`);
+    });
+
+    // ── Volcanoes ──
+    map.on('click', 'volcano-dots', e => {
+      if (!e.features?.length) return;
+      const p = e.features[0].properties as any;
+      const coords = (e.features[0].geometry as any).coordinates;
+      const alertColors: Record<string, string> = { Red: '#FF1744', Orange: '#FF6B35', Yellow: '#FFD700', Green: '#00E676' };
+      const col = alertColors[p.alert_level] || '#FF6B35';
+      popup(coords, `<div style="${pStyle}border:1px solid ${col}40;">
+        <div style="color:${col};font-size:14px;font-weight:700;margin-bottom:4px;">🌋 ${p.name}</div>
+        <div style="font-size:9px;color:#aaa;margin-bottom:8px;">${p.type} — ${p.country}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:9px;">
+          <div><span style="color:#5C5A54;">ALERT LEVEL</span><br/><span style="color:${col};font-weight:bold;">${p.alert_level}</span></div>
+          <div><span style="color:#5C5A54;">ELEVATION</span><br/><span style="color:#E8E6E0;">${p.elevation_m ? p.elevation_m.toLocaleString() + ' m' : '—'}</span></div>
+          <div><span style="color:#5C5A54;">ACTIVITY</span><br/><span style="color:#E8E6E0;">${p.activity_level}</span></div>
+          <div><span style="color:#5C5A54;">COORDS</span><br/><span style="color:#E8E6E0;">${coords[1].toFixed(3)}°, ${coords[0].toFixed(3)}°</span></div>
+        </div>
+      </div>`);
+    });
+
+    // ── Tropical Storms ──
+    map.on('click', 'storm-dots', e => {
+      if (!e.features?.length) return;
+      const p = e.features[0].properties as any;
+      const coords = (e.features[0].geometry as any).coordinates;
+      popup(coords, `<div style="${pStyle}border:1px solid rgba(0,188,212,0.4);">
+        <div style="color:#00BCD4;font-size:14px;font-weight:700;margin-bottom:4px;">🌀 ${p.name}</div>
+        <div style="font-size:9px;color:#aaa;margin-bottom:8px;">${p.type} — ${p.basin}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:9px;">
+          <div><span style="color:#5C5A54;">MAX WINDS</span><br/><span style="color:#00BCD4;font-weight:bold;">${p.max_winds_mph || '—'} mph</span></div>
+          <div><span style="color:#5C5A54;">CATEGORY</span><br/><span style="color:#E8E6E0;">${p.category || '—'}</span></div>
+          <div><span style="color:#5C5A54;">PRESSURE</span><br/><span style="color:#E8E6E0;">${p.pressure_mb || '—'} mb</span></div>
+          <div><span style="color:#5C5A54;">MOVEMENT</span><br/><span style="color:#E8E6E0;">${p.movement || '—'}</span></div>
+        </div>
+      </div>`);
+    });
+
+    // ── Conflict Events ──
+    map.on('click', 'conflict-event-dots', e => {
+      if (!e.features?.length) return;
+      const p = e.features[0].properties as any;
+      const coords = (e.features[0].geometry as any).coordinates;
+      popup(coords, `<div style="${pStyle}border:1px solid rgba(255,23,68,0.4);">
+        <div style="color:#FF1744;font-size:12px;font-weight:700;margin-bottom:4px;">⚔️ ${p.type || 'Armed Conflict'}</div>
+        <div style="font-size:9px;color:#aaa;margin-bottom:6px;">${p.location}, ${p.country} — ${p.date}</div>
+        <div style="display:grid;grid-template-columns:1fr;gap:4px;font-size:9px;">
+          ${p.actors ? `<div><span style="color:#5C5A54;">ACTORS</span><br/><span style="color:#E8E6E0;">${p.actors}</span></div>` : ''}
+          ${p.fatalities !== undefined ? `<div><span style="color:#5C5A54;">FATALITIES</span><br/><span style="color:${p.fatalities > 0 ? '#FF1744' : '#00E676'};font-weight:bold;">${p.fatalities}</span></div>` : ''}
+          <div><span style="color:#5C5A54;">SOURCE</span><br/><span style="color:#E8E6E0;">${p.source || '—'}</span></div>
+        </div>
+      </div>`);
+    });
+
+    // ── Internet Outages ──
+    map.on('click', 'outage-dots', e => {
+      if (!e.features?.length) return;
+      const p = e.features[0].properties as any;
+      const coords = (e.features[0].geometry as any).coordinates;
+      popup(coords, `<div style="${pStyle}border:1px solid rgba(33,150,243,0.4);">
+        <div style="color:#2196F3;font-size:12px;font-weight:700;margin-bottom:4px;">📡 Internet Outage</div>
+        <div style="font-size:9px;color:#aaa;margin-bottom:6px;">${p.location || p.country}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:9px;">
+          <div><span style="color:#5C5A54;">TYPE</span><br/><span style="color:#2196F3;">${p.type || '—'}</span></div>
+          <div><span style="color:#5C5A54;">SEVERITY</span><br/><span style="color:${p.severity === 'high' ? '#FF1744' : '#FF9500'};">${p.severity || '—'}</span></div>
+          <div><span style="color:#5C5A54;">START</span><br/><span style="color:#E8E6E0;">${p.start_time?.slice(0,16) || '—'}</span></div>
+          <div><span style="color:#5C5A54;">END</span><br/><span style="color:#E8E6E0;">${p.end_time?.slice(0,16) || 'ONGOING'}</span></div>
+        </div>
+        ${p.description ? `<div style="margin-top:6px;font-size:9px;color:#aaa;">${p.description}</div>` : ''}
+      </div>`);
+    });
+
+    // ── Submarine Cable Landing Points ──
+    map.on('click', 'cable-dots', e => {
+      if (!e.features?.length) return;
+      const p = e.features[0].properties as any;
+      const coords = (e.features[0].geometry as any).coordinates;
+      const cables = typeof p.cables === 'string' ? JSON.parse(p.cables || '[]') : (p.cables || []);
+      popup(coords, `<div style="${pStyle}border:1px solid rgba(0,229,255,0.4);">
+        <div style="color:#00E5FF;font-size:12px;font-weight:700;margin-bottom:4px;">🔌 ${p.name}</div>
+        <div style="font-size:9px;color:#aaa;margin-bottom:6px;">Submarine Cable Landing Point</div>
+        <div style="font-size:9px;"><span style="color:#5C5A54;">CONNECTED CABLES</span><br/>
+          <span style="color:#E8E6E0;">${Array.isArray(cables) ? cables.slice(0, 5).map((c: any) => c.name || c).join(', ') : '—'}${cables.length > 5 ? ` +${cables.length - 5} more` : ''}</span>
+        </div>
+      </div>`);
+    });
+
+    // ── Humanitarian Alerts ──
+    map.on('click', 'humanitarian-dots', e => {
+      if (!e.features?.length) return;
+      const p = e.features[0].properties as any;
+      const coords = (e.features[0].geometry as any).coordinates;
+      popup(coords, `<div style="${pStyle}border:1px solid rgba(255,149,0,0.4);">
+        <div style="color:#FF9500;font-size:12px;font-weight:700;margin-bottom:4px;">🆘 ${p.name}</div>
+        <div style="font-size:9px;color:#aaa;margin-bottom:6px;">${p.type || p.primary_type} — ${p.country}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:9px;">
+          <div><span style="color:#5C5A54;">STATUS</span><br/><span style="color:${p.status === 'ongoing' ? '#FF1744' : '#FFD700'};">${(p.status || '').toUpperCase()}</span></div>
+          <div><span style="color:#5C5A54;">DATE</span><br/><span style="color:#E8E6E0;">${p.date?.slice(0,10) || '—'}</span></div>
+        </div>
+      </div>`);
+    });
+
     // ── Live News (opens feed viewer) ──
     map.on('click', 'news-dots', e => {
       const p = e.features?.[0]?.properties;
@@ -896,29 +1338,85 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
 
   useEffect(() => {
     if (!mapReady) return;
-    // ── CONFLICT ZONES — center-point warning markers ──
-    const CONFLICT_ZONES = [
-      { label: 'UKRAINE WAR', severity: 'war', lat: 48.5, lng: 31.2 },
-      { label: 'GAZA CONFLICT', severity: 'war', lat: 31.35, lng: 34.35 },
-      { label: 'LEBANON BORDER', severity: 'high', lat: 33.4, lng: 35.8 },
-      { label: 'SUDAN CIVIL WAR', severity: 'war', lat: 15.0, lng: 30.0 },
-      { label: 'MYANMAR CONFLICT', severity: 'war', lat: 19.5, lng: 96.5 },
-      { label: 'DRC EASTERN CONFLICT', severity: 'war', lat: -1.0, lng: 28.5 },
-      { label: 'YEMEN WAR', severity: 'war', lat: 15.5, lng: 48.0 },
-      { label: 'SYRIA', severity: 'high', lat: 35.0, lng: 38.5 },
-      { label: 'TAIWAN STRAIT', severity: 'elevated', lat: 24.0, lng: 119.5 },
-      { label: 'KOREAN DMZ', severity: 'elevated', lat: 38.3, lng: 127.0 },
-      { label: 'SAHEL INSTABILITY', severity: 'high', lat: 14.0, lng: 5.0 },
-      { label: 'SOMALIA', severity: 'high', lat: 5.0, lng: 46.0 },
-      { label: 'RED SEA THREAT', severity: 'high', lat: 16.0, lng: 40.0 },
-    ];
-    const conflictFeatures = CONFLICT_ZONES.map(z => ({
+    setGeo('mil-sats', activeLayers.mil_satellites && data.mil_satellites ? data.mil_satellites.map((s: any) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [s.lng, s.lat] }, properties: { name: s.name, nation: s.nation, mission: s.mission, alt: s.alt, noradId: s.noradId, color: s.color } })) : []);
+  }, [mapReady, data.mil_satellites, activeLayers.mil_satellites, setGeo]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    setGeo('notam-zones', activeLayers.notam && data.notam_zones ? data.notam_zones.map((z: any) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [z.lng, z.lat] }, properties: { name: z.name, type: z.type, radius_nm: z.radius_nm, alt_floor_ft: z.alt_floor_ft, alt_ceiling_ft: z.alt_ceiling_ft, effective_start: z.effective_start, effective_end: z.effective_end, reason: z.reason, source: z.source } })) : []);
+  }, [mapReady, data.notam_zones, activeLayers.notam, setGeo]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    setGeo('mil-bases', activeLayers.military_bases && data.military_bases ? data.military_bases.map((b: any) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [b.lng, b.lat] }, properties: { name: b.name, country: b.country, operator: b.operator, type: b.type, classification: b.classification, notes: b.notes } })) : []);
+  }, [mapReady, data.military_bases, activeLayers.military_bases, setGeo]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    setGeo('sigint-stations', activeLayers.sigint && data.sigint_stations ? data.sigint_stations.map((s: any) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [s.lng, s.lat] }, properties: { name: s.name, operator: s.operator, nation: s.nation, type: s.type, targets: s.targets, program: s.program, notes: s.notes } })) : []);
+  }, [mapReady, data.sigint_stations, activeLayers.sigint, setGeo]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    setGeo('apt-groups', activeLayers.apt_groups && data.apt_groups ? data.apt_groups.map((g: any) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [g.lng, g.lat] }, properties: { name: g.name, aliases: JSON.stringify(g.aliases), nation: g.nation, sponsor: g.sponsor, active_since: g.active_since, primary_targets: g.primary_targets, known_tools: g.known_tools, notable_ops: g.notable_ops, tlp_color: g.tlp_color } })) : []);
+  }, [mapReady, data.apt_groups, activeLayers.apt_groups, setGeo]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    setGeo('spyware-ops', activeLayers.spyware_infra && data.spyware_operators ? data.spyware_operators.map((o: any) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [o.lng, o.lat] }, properties: { name: o.name, country: o.country, spyware_name: o.spyware_name, status: o.status, target_os: o.target_os, known_customers: JSON.stringify(o.known_customers), exposed_by: o.exposed_by, exposure_date: o.exposure_date, notes: o.notes } })) : []);
+  }, [mapReady, data.spyware_operators, activeLayers.spyware_infra, setGeo]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    setGeo('ripe-probes', activeLayers.ripe_atlas && data.ripe_probes ? data.ripe_probes.map((p: any) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [p.lng, p.lat] }, properties: { id: p.id, country: p.country, asn: p.asn, description: p.description, is_anchor: !!p.is_anchor, probe_id: p.probe_id } })) : []);
+  }, [mapReady, data.ripe_probes, activeLayers.ripe_atlas, setGeo]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    setGeo('device-heatmap', activeLayers.device_heatmap && data.device_heatmap ? data.device_heatmap.map((d: any) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [d.lng, d.lat] }, properties: { country: d.country, count: d.count, category_id: d.category_id, category_label: d.category_label, color: d.color, severity: d.severity, total_in_category: d.total_in_category } })) : []);
+  }, [mapReady, data.device_heatmap, activeLayers.device_heatmap, setGeo]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    setGeo('volcanoes', activeLayers.volcanoes && data.volcanoes ? data.volcanoes.map((v: any) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [v.lng, v.lat] }, properties: { name: v.name, country: v.country, type: v.type, elevation_m: v.elevation_m, activity_level: v.activity_level, alert_level: v.alert_level || 'Unknown' } })) : []);
+  }, [mapReady, data.volcanoes, activeLayers.volcanoes, setGeo]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    setGeo('storms', activeLayers.storms && data.storms ? data.storms.map((s: any) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [s.lng, s.lat] }, properties: { name: s.name, type: s.type, basin: s.basin, max_winds_mph: s.max_winds_mph, pressure_mb: s.pressure_mb, movement: s.movement, category: s.category } })) : []);
+  }, [mapReady, data.storms, activeLayers.storms, setGeo]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    setGeo('conflict-events', activeLayers.conflicts && data.conflict_events ? data.conflict_events.map((c: any) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [c.lng, c.lat] }, properties: { type: c.type, location: c.location, country: c.country, date: c.date, actors: c.actors, fatalities: c.fatalities, source: c.source } })) : []);
+  }, [mapReady, data.conflict_events, activeLayers.conflicts, setGeo]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    setGeo('internet-outages', activeLayers.internet_outages && data.internet_outages ? data.internet_outages.map((o: any) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [o.lng, o.lat] }, properties: { location: o.location, country: o.country, type: o.type, severity: o.severity, start_time: o.start_time, end_time: o.end_time, description: o.description } })) : []);
+  }, [mapReady, data.internet_outages, activeLayers.internet_outages, setGeo]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    setGeo('cable-points', activeLayers.submarine_cables && data.cable_landing_points ? data.cable_landing_points.map((p: any) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [p.lng, p.lat] }, properties: { name: p.name, cables: JSON.stringify(p.cables || []) } })) : []);
+  }, [mapReady, data.cable_landing_points, activeLayers.submarine_cables, setGeo]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    setGeo('humanitarian', activeLayers.humanitarian && data.humanitarian ? data.humanitarian.map((h: any) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [h.lng, h.lat] }, properties: { name: h.name, type: h.type, primary_type: h.primary_type, country: h.country, status: h.status, date: h.date } })) : []);
+  }, [mapReady, data.humanitarian, activeLayers.humanitarian, setGeo]);
+
+  // Conflict zones — driven by /api/conflict-zones (no longer hardcoded in component)
+  useEffect(() => {
+    if (!mapReady) return;
+    const zones = data.conflict_zones || [];
+    const features = zones.map((z: any) => ({
       type: 'Feature' as const,
       geometry: { type: 'Point' as const, coordinates: [z.lng, z.lat] },
-      properties: { label: z.label, severity: z.severity },
+      properties: { label: z.label, severity: z.severity, description: z.description },
     }));
-    setGeo('conflict-zones', conflictFeatures);
-  }, [mapReady, setGeo]);
+    setGeo('conflict-zones', features);
+  }, [mapReady, data.conflict_zones, setGeo]);
 
 
   // Visibility
@@ -934,6 +1432,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
     setVis(['fl-jets'], activeLayers.jets);
     setVis(['fl-military'], activeLayers.military);
     setVis(['cctv-glow','cctv-dots','cctv-label'], activeLayers.cctv);
+  useEffect(() => { setVis(['shodan-glow','shodan-dots','shodan-label'], activeLayers.shodan); }, [mapReady, activeLayers.shodan, setVis]);
     setVis(['fires-heat'], activeLayers.fires);
     setVis(['weather-glow','weather-dots','weather-label'], activeLayers.weather);
     setVis(['infra-glow','infra-dots','infra-label'], activeLayers.infrastructure);
@@ -946,6 +1445,20 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
 
     setVis(['balloon-dots','balloon-label'], activeLayers.balloons);
     setVis(['rad-glow','rad-dots','rad-label'], activeLayers.radiation);
+    setVis(['milsat-glow','milsat-dots','milsat-label'], activeLayers.mil_satellites);
+    setVis(['notam-fill','notam-border','notam-label'], activeLayers.notam);
+    setVis(['mil-base-glow','mil-base-dots','mil-base-label'], activeLayers.military_bases);
+    setVis(['sigint-glow','sigint-dots','sigint-label'], activeLayers.sigint);
+    setVis(['apt-glow','apt-dots','apt-label'], activeLayers.apt_groups);
+    setVis(['spyware-glow','spyware-dots','spyware-label'], activeLayers.spyware_infra);
+    setVis(['ripe-dots'], activeLayers.ripe_atlas);
+    setVis(['device-heat','device-core'], activeLayers.device_heatmap);
+    setVis(['volcano-glow','volcano-dots','volcano-label'], activeLayers.volcanoes);
+    setVis(['storm-glow','storm-dots','storm-label'], activeLayers.storms);
+    setVis(['conflict-event-glow','conflict-event-dots'], activeLayers.conflicts);
+    setVis(['outage-glow','outage-dots','outage-label'], activeLayers.internet_outages);
+    setVis(['cable-glow','cable-dots'], activeLayers.submarine_cables);
+    setVis(['humanitarian-glow','humanitarian-dots'], activeLayers.humanitarian);
     // Sweep layers always visible when data is present (controlled by useEffect)
     setVis(['sweep-connections','sweep-pulse-ring','sweep-device-glow','sweep-device-dots','sweep-device-labels'], true);
   }, [mapReady, activeLayers, setVis]);

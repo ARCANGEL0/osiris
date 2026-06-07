@@ -131,14 +131,47 @@ export async function GET() {
     // Fallback to static list if API fails
   }
 
+  // Wikidata SPARQL — augment with live nuclear power plant data
+  // (fills gaps in the static list, especially developing nations)
+  try {
+    const sparql = `SELECT DISTINCT ?item ?itemLabel ?lat ?lon ?countryLabel WHERE {
+      { ?item wdt:P31/wdt:P279* wd:Q134447 } UNION { ?item wdt:P31 wd:Q1130295 }
+      ?item wdt:P625 ?coord .
+      BIND(geof:latitude(?coord) AS ?lat)
+      BIND(geof:longitude(?coord) AS ?lon)
+      OPTIONAL { ?item wdt:P17 ?country }
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    } LIMIT 400`;
+    const wdRes = await fetch(
+      `https://query.wikidata.org/sparql?query=${encodeURIComponent(sparql)}&format=json`,
+      { signal: AbortSignal.timeout(20000), headers: { 'Accept': 'application/sparql-results+json', 'User-Agent': 'OSIRIS/4.2' } }
+    );
+    if (wdRes.ok) {
+      const wdData = await wdRes.json();
+      const existingNames = new Set(dynamicFacilities.map((f: any) => f.name.toLowerCase()));
+      for (const row of (wdData?.results?.bindings || [])) {
+        const lat = parseFloat(row.lat?.value);
+        const lng = parseFloat(row.lon?.value);
+        const name = row.itemLabel?.value || 'Nuclear Facility';
+        if (isNaN(lat) || isNaN(lng) || existingNames.has(name.toLowerCase())) continue;
+        if (/^Q\d+$/.test(name)) continue; // skip unlabeled Wikidata items
+        existingNames.add(name.toLowerCase());
+        dynamicFacilities.push({
+          id: `wd-${row.item?.value?.split('/').pop()}`,
+          name, lat, lng,
+          city: '', country: row.countryLabel?.value || '',
+          status: 'Operational', reactors: 0, capacityMW: 0, owner: '',
+          // source: 'Wikidata',
+        });
+      }
+    }
+  } catch { /* silent — static list is the safety net */ }
+
   return NextResponse.json({
     infrastructure: dynamicFacilities,
     total: dynamicFacilities.length,
     timestamp: new Date().toISOString(),
   }, {
-    headers: { 
-      'Cache-Control': 'no-store, no-cache, must-revalidate',
-      'Pragma': 'no-cache'
-    }
+    headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' }
   });
 }

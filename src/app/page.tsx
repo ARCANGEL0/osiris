@@ -125,6 +125,7 @@ export default function Dashboard() {
     satellites: false,
     balloons: false,
     cctv: true,
+    shodan: false,
     live_news: true,
     news_intel: true,
     earthquakes: true,
@@ -136,6 +137,20 @@ export default function Dashboard() {
     war_alerts: false,
     gps_jamming: false,
     day_night: true,
+    volcanoes: false,
+    storms: false,
+    conflicts: false,
+    internet_outages: false,
+    submarine_cables: false,
+    humanitarian: false,
+    military_bases: false,
+    mil_satellites: false,
+    notam: false,
+    sigint: false,
+    apt_groups: false,
+    spyware_infra: false,
+    ripe_atlas: false,
+    device_heatmap: false,
   });
   const [liveFeedUrl, setLiveFeedUrl] = useState<string | null>(null);
   const [liveFeedName, setLiveFeedName] = useState('');
@@ -288,6 +303,7 @@ export default function Dashboard() {
     // Priority 1: Core feeds (always needed for panels)
     fetchEndpoint('/api/earthquakes');
     fetchEndpoint('/api/news');
+    fetchEndpoint('/api/conflict-zones', d => ({ conflict_zones: d.zones }));
     const marketTimer = setTimeout(() => fetchEndpoint('/api/markets', d => ({ markets: d })), 800);
 
     // Priority 2: Space Weather (needed for MarketsPanel)
@@ -337,6 +353,10 @@ export default function Dashboard() {
       fetchEndpoint('/api/cctv?region=all&v=2');
       layerFetchedRef.current.add('cctv');
     }
+    if (activeLayers.shodan && !layerFetchedRef.current.has('shodan')) {
+      fetchEndpoint('/api/cctv?region=all&v=2');
+      layerFetchedRef.current.add('shodan');
+    }
     // Maritime
     if (activeLayers.maritime && !layerFetchedRef.current.has('maritime')) {
       fetchEndpoint('/api/maritime', d => ({ maritime_ports: d.ports, maritime_chokepoints: d.chokepoints, maritime_ships: d.ships }));
@@ -371,6 +391,76 @@ export default function Dashboard() {
     if (activeLayers.global_incidents && !layerFetchedRef.current.has('gdelt')) {
       fetchEndpoint('/api/gdelt', d => ({ gdelt: d.events }));
       layerFetchedRef.current.add('gdelt');
+    }
+    // Volcanoes
+    if (activeLayers.volcanoes && !layerFetchedRef.current.has('volcanoes')) {
+      fetchEndpoint('/api/volcanoes', d => ({ volcanoes: d.volcanoes }));
+      layerFetchedRef.current.add('volcanoes');
+    }
+    // Tropical Storms
+    if (activeLayers.storms && !layerFetchedRef.current.has('storms')) {
+      fetchEndpoint('/api/storms', d => ({ storms: d.storms }));
+      layerFetchedRef.current.add('storms');
+    }
+    // Armed Conflicts (ACLED / ReliefWeb)
+    if (activeLayers.conflicts && !layerFetchedRef.current.has('conflicts')) {
+      fetchEndpoint('/api/conflicts', d => ({ conflict_events: d.events }));
+      layerFetchedRef.current.add('conflicts');
+    }
+    // Internet Outages
+    if (activeLayers.internet_outages && !layerFetchedRef.current.has('internet_outages')) {
+      fetchEndpoint('/api/internet-outages', d => ({ internet_outages: d.outages }));
+      layerFetchedRef.current.add('internet_outages');
+    }
+    // Submarine Cables
+    if (activeLayers.submarine_cables && !layerFetchedRef.current.has('submarine_cables')) {
+      fetchEndpoint('/api/submarine-cables', d => ({ submarine_cables: d.cables, cable_landing_points: d.landing_points }));
+      layerFetchedRef.current.add('submarine_cables');
+    }
+    // Humanitarian Alerts
+    if (activeLayers.humanitarian && !layerFetchedRef.current.has('humanitarian')) {
+      fetchEndpoint('/api/humanitarian', d => ({ humanitarian: d.disasters }));
+      layerFetchedRef.current.add('humanitarian');
+    }
+    // Military Bases (live from Overpass/OSM)
+    if (activeLayers.military_bases && !layerFetchedRef.current.has('military_bases')) {
+      fetchEndpoint('/api/military-bases', d => ({ military_bases: d.bases }));
+      layerFetchedRef.current.add('military_bases');
+    }
+    // Military Satellites (Space-Track / CelesTrak)
+    if (activeLayers.mil_satellites && !layerFetchedRef.current.has('mil_satellites')) {
+      fetchEndpoint('/api/mil-satellites', d => ({ mil_satellites: d.satellites }));
+      layerFetchedRef.current.add('mil_satellites');
+    }
+    // NOTAM / Restricted Airspace
+    if (activeLayers.notam && !layerFetchedRef.current.has('notam')) {
+      fetchEndpoint('/api/notam', d => ({ notam_zones: d.zones }));
+      layerFetchedRef.current.add('notam');
+    }
+    // SIGINT Stations
+    if (activeLayers.sigint && !layerFetchedRef.current.has('sigint')) {
+      fetchEndpoint('/api/sigint-stations', d => ({ sigint_stations: d.stations }));
+      layerFetchedRef.current.add('sigint');
+    }
+    // APT Groups
+    if (activeLayers.apt_groups && !layerFetchedRef.current.has('apt_groups')) {
+      fetchEndpoint('/api/apt-groups', d => ({ apt_groups: d.groups }));
+      layerFetchedRef.current.add('apt_groups');
+    }
+    // Spyware Infrastructure
+    if (activeLayers.spyware_infra && !layerFetchedRef.current.has('spyware_infra')) {
+      fetchEndpoint('/api/spyware-infra', d => ({ spyware_operators: d.operators }));
+      layerFetchedRef.current.add('spyware_infra');
+    }
+    // RIPE Atlas internet measurement nodes (14k+ worldwide)
+    if (activeLayers.ripe_atlas && !layerFetchedRef.current.has('ripe_atlas')) {
+      fetchEndpoint('/api/ripe-atlas', d => ({ ripe_probes: d.probes }));
+      layerFetchedRef.current.add('ripe_atlas');
+    }
+    // Global device exposure heatmap (Shodan facets — millions of devices)
+    if (activeLayers.device_heatmap && !layerFetchedRef.current.has('device_heatmap')) {
+      fetchEndpoint('/api/device-heatmap', d => ({ device_heatmap: d.devices }));
+      layerFetchedRef.current.add('device_heatmap');
     }
 
   }, [activeLayers]);
@@ -736,6 +826,7 @@ export default function Dashboard() {
                 <div><div className="hud-label">AIRCRAFT</div><div className="hud-value text-[10px] animate-data-pulse">{globalStats ? globalStats.flights.toLocaleString() : '0'}</div></div>
                 <div><div className="hud-label">SATS</div><div className="hud-value text-[10px]">{globalStats ? globalStats.sats.toLocaleString() : '0'}</div></div>
                 <div><div className="hud-label">CCTV</div><div className="hud-value text-[10px]">{globalStats ? globalStats.cctv.toLocaleString() : '0'}</div></div>
+                <div><div className="hud-label" style={{color:'#FF00FF'}}>SHODAN</div><div className="hud-value text-[10px]" style={{color:'#FF00FF'}}>{data.cameras?.filter((c:any) => c.source === 'Shodan').length || 0}</div></div>
                 <div><div className="hud-label">WEATHER</div><div className="hud-value text-[10px]" style={{ color: 'var(--accent-weather)' }}>{globalStats ? globalStats.weather.toLocaleString() : '0'}</div></div>
                 <div><div className="hud-label">NUCLEAR</div><div className="hud-value text-[10px]" style={{ color: 'var(--accent-nuclear)' }}>{globalStats ? globalStats.nuclear.toLocaleString() : '0'}</div></div>
               </div>

@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { stealthFetch } from '@/lib/stealthFetch';
+
 
 /**
  * OSIRIS — Satellite Tracking API
@@ -144,7 +144,7 @@ export async function GET() {
 
     if (globalCachedSats.length === 0 || nowTime - globalCacheTime > 3600000) { // 1 hour cache
       try {
-        const res = await stealthFetch(SATNOGS_API, {
+        const res = await fetch(SATNOGS_API, {
           signal: AbortSignal.timeout(15000),
           headers: { 'Accept': 'application/json' },
         });

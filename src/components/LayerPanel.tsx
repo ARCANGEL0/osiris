@@ -7,6 +7,8 @@ import {
   Shield, Sun, AlertTriangle, Camera, Flame, Target,
   CloudLightning, Radiation, Tv, Anchor, Ship, Newspaper,
   ChevronDown, ChevronUp, ToggleLeft, ToggleRight,
+  Mountain, Wind, Swords, Wifi, Heart, Cable,
+  Building2, Crosshair, Bug, Skull, BrainCircuit, Network, Cpu, Globe2,
 } from 'lucide-react';
 
 interface LayerPanelProps {
@@ -42,6 +44,7 @@ const LAYER_GROUPS = [
     color: '#39FF14',
     layers: [
       { key: 'cctv', label: 'CCTV Cameras', icon: Camera, color: '#39FF14', dataKey: 'cameras' },
+      { key: 'shodan', label: 'Shodan IP Cameras', icon: Camera, color: '#FF00FF', dataKey: 'shodan_cameras' },
       { key: 'live_news', label: 'Live News Feeds', icon: Tv, color: '#FF4081', dataKey: 'live_feeds' },
     ],
   },
@@ -53,6 +56,8 @@ const LAYER_GROUPS = [
       { key: 'earthquakes', label: 'Earthquakes (24h)', icon: Activity, color: '#FF9500', dataKey: 'earthquakes' },
       { key: 'fires', label: 'Active Fires', icon: Flame, color: '#FF6B00', dataKey: 'fires' },
       { key: 'weather', label: 'Severe Weather', icon: CloudLightning, color: '#E040FB', dataKey: 'weather_events' },
+      { key: 'volcanoes', label: 'Volcanoes', icon: Mountain, color: '#FF6B35', dataKey: 'volcanoes' },
+      { key: 'storms', label: 'Tropical Storms', icon: Wind, color: '#00BCD4', dataKey: 'storms' },
     ],
   },
   {
@@ -62,7 +67,33 @@ const LAYER_GROUPS = [
     layers: [
       { key: 'infrastructure', label: 'Nuclear Facilities', icon: Radiation, color: '#76FF03', dataKey: 'infrastructure' },
       { key: 'global_incidents', label: 'Global Incidents', icon: AlertTriangle, color: '#FF3D3D', dataKey: 'gdelt' },
+      { key: 'conflicts', label: 'Armed Conflicts', icon: Swords, color: '#FF1744', dataKey: 'conflict_events' },
       { key: 'gps_jamming', label: 'GPS Jamming', icon: Radio, color: '#FF4444', dataKey: 'gps_jamming' },
+      { key: 'internet_outages', label: 'Internet Outages', icon: Wifi, color: '#2196F3', dataKey: 'internet_outages' },
+      { key: 'submarine_cables', label: 'Submarine Cables', icon: Cable, color: '#00E5FF', dataKey: 'cable_landing_points' },
+      { key: 'humanitarian', label: 'Humanitarian Alerts', icon: Heart, color: '#FF9500', dataKey: 'humanitarian' },
+    ],
+  },
+  {
+    label: 'MILITARY INTEL',
+    icon: Crosshair,
+    color: '#FF1744',
+    layers: [
+      { key: 'military_bases', label: 'Military Bases (OSM)', icon: Building2, color: '#FF1744', dataKey: 'military_bases' },
+      { key: 'mil_satellites', label: 'Military Satellites', icon: Satellite, color: '#FF3D3D', dataKey: 'mil_satellites' },
+      { key: 'notam', label: 'Restricted Airspace', icon: Shield, color: '#FF9500', dataKey: 'notam_zones' },
+      { key: 'sigint', label: 'SIGINT Stations', icon: Radio, color: '#FF9500', dataKey: 'sigint_stations' },
+      { key: 'apt_groups', label: 'APT Group Origins', icon: BrainCircuit, color: '#E040FB', dataKey: 'apt_groups' },
+      { key: 'spyware_infra', label: 'Spyware Infrastructure', icon: Bug, color: '#FF3D3D', dataKey: 'spyware_operators' },
+    ],
+  },
+  {
+    label: 'CYBER / INTERNET',
+    icon: Network,
+    color: '#00E5FF',
+    layers: [
+      { key: 'ripe_atlas', label: 'Internet Nodes (RIPE)', icon: Globe2, color: '#00E5FF', dataKey: 'ripe_probes' },
+      { key: 'device_heatmap', label: 'Exposed Devices (Shodan)', icon: Cpu, color: '#39FF14', dataKey: 'device_heatmap' },
     ],
   },
   {

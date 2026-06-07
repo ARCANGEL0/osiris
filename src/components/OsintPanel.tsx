@@ -7,7 +7,8 @@ import {
   ChevronDown, ChevronUp, Loader2, AlertTriangle, Server,
   Wifi, Lock, MapPin, Bug, Code, Layers, Network, Fingerprint,
   CheckCircle, XCircle, Clock, ExternalLink, Crosshair,
-  Maximize2, Minimize2, Gavel, Bitcoin, Phone, Terminal, ShieldAlert
+  Maximize2, Minimize2, Gavel, Bitcoin, Phone, Terminal, ShieldAlert,
+  Skull,
 } from 'lucide-react';
 import { ipToNumber, numberToIp, calculateSubnetStart, classifyDevice, assessRisk, batchFetch, ShodanInternetDBResponse, SweepDevice } from '@/lib/osint-utils';
 
@@ -29,6 +30,22 @@ const TABS = [
   { id: 'phone', label: 'PHONE INTEL', icon: Phone, placeholder: 'Phone number (e.g. +1...)', color: '#FF9500' },
   { id: 'leaks', label: 'DATA LEAKS', icon: ShieldAlert, placeholder: 'Email address', color: '#E040FB' },
   { id: 'github', label: 'GITHUB RECON', icon: Terminal, placeholder: 'GitHub username', color: '#87CEEB' },
+  // ── Cyber threat feeds ──
+  { id: 'threatfox', label: 'THREATFOX', icon: AlertTriangle, placeholder: 'IP, domain, URL, or hash', color: '#FF1744' },
+  { id: 'urlhaus', label: 'URLHAUS', icon: Wifi, placeholder: 'URL or hostname', color: '#FF6B00' },
+  { id: 'c2check', label: 'C2 CHECK', icon: Server, placeholder: 'IP address', color: '#FF3D3D' },
+  { id: 'spycheck', label: 'SPYWARE DB', icon: Bug, placeholder: 'Domain or IP', color: '#E040FB' },
+  { id: 'darkweb', label: 'DARK WEB', icon: Skull, placeholder: 'Search term', color: '#9C27B0' },
+  // ── Network intel ──
+  { id: 'greynoise', label: 'GREYNOISE', icon: Radio, placeholder: 'IP address', color: '#FF9500' },
+  { id: 'urlscan', label: 'URL SCAN', icon: Globe, placeholder: 'domain:example.com', color: '#448AFF' },
+  { id: 'wayback', label: 'WAYBACK', icon: Clock, placeholder: 'URL or domain', color: '#87CEEB' },
+  { id: 'tor', label: 'TOR CHECK', icon: Shield, placeholder: 'IP address', color: '#9C27B0' },
+  { id: 'pdns', label: 'PASSIVE DNS', icon: Server, placeholder: 'Domain or IP', color: '#00BCD4' },
+  { id: 'reverseip', label: 'REVERSE IP', icon: MapPin, placeholder: 'IP address', color: '#FF3D3D' },
+  { id: 'asn', label: 'ASN LOOKUP', icon: Network, placeholder: 'AS12345 or 1.2.3.0/24', color: '#D4AF37' },
+  { id: 'otx', label: 'OTX INTEL', icon: ShieldAlert, placeholder: 'IP, domain, URL, or hash', color: '#FF6B00' },
+  { id: 'virustotal', label: 'VIRUSTOTAL', icon: Bug, placeholder: 'IP, domain, URL, or hash', color: '#2196F3' },
   { id: 'sweep', label: 'IP SWEEP', icon: Crosshair, placeholder: 'Enter IP address (e.g. 8.8.8.8)', color: '#FF3D3D' },
 ];
 
@@ -169,6 +186,20 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
         case 'subdomains': url = `/api/scanner?target=${encodeURIComponent(query)}&type=subdomains`; break;
         case 'tech': url = `/api/scanner?target=${encodeURIComponent(query)}&type=tech`; break;
         case 'shodan': url = `https://internetdb.shodan.io/${encodeURIComponent(query)}`; break;
+        case 'threatfox': url = `/api/osint/threatfox?ioc=${encodeURIComponent(query)}`; break;
+        case 'urlhaus': url = `/api/osint/urlhaus?url=${encodeURIComponent(query)}`; break;
+        case 'c2check': url = `/api/osint/c2?ip=${encodeURIComponent(query)}`; break;
+        case 'spycheck': url = `/api/osint/spyware-check?target=${encodeURIComponent(query)}`; break;
+        case 'darkweb': url = `/api/osint/darkweb?query=${encodeURIComponent(query)}`; break;
+        case 'greynoise': url = `/api/osint/greynoise?ip=${encodeURIComponent(query)}`; break;
+        case 'urlscan': url = `/api/osint/urlscan?q=${encodeURIComponent(query)}`; break;
+        case 'wayback': url = `/api/osint/wayback?url=${encodeURIComponent(query)}`; break;
+        case 'tor': url = `/api/osint/tor?ip=${encodeURIComponent(query)}`; break;
+        case 'pdns': url = `/api/osint/pdns?query=${encodeURIComponent(query)}`; break;
+        case 'reverseip': url = `/api/osint/reverse-ip?ip=${encodeURIComponent(query)}`; break;
+        case 'asn': url = `/api/osint/asn?resource=${encodeURIComponent(query)}`; break;
+        case 'otx': url = `/api/osint/otx?ioc=${encodeURIComponent(query)}&type=ip`; break;
+        case 'virustotal': url = `/api/osint/virustotal?resource=${encodeURIComponent(query)}&type=ip`; break;
       }
       const res = await fetch(url, activeTab === 'shodan' ? { cache: 'no-store' } : undefined);
       if (activeTab === 'shodan' && res.status === 404) {
@@ -186,7 +217,7 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
           if (data.lat && data.lng && onScanGeolocate) {
              onScanGeolocate(query, { lat: data.lat, lng: data.lng, type: 'phone', region: data.region });
           }
-        } else if (activeTab !== 'sweep' && activeTab !== 'vuln' && activeTab !== 'crypto' && activeTab !== 'mac' && activeTab !== 'bgp' && activeTab !== 'github' && activeTab !== 'leaks' && activeTab !== 'phone') {
+        } else if (activeTab !== 'sweep' && activeTab !== 'vuln' && activeTab !== 'crypto' && activeTab !== 'mac' && activeTab !== 'bgp' && activeTab !== 'github' && activeTab !== 'leaks' && activeTab !== 'phone' && activeTab !== 'greynoise' && activeTab !== 'urlscan' && activeTab !== 'wayback' && activeTab !== 'tor' && activeTab !== 'pdns' && activeTab !== 'reverseip' && activeTab !== 'asn' && activeTab !== 'otx' && activeTab !== 'virustotal' && activeTab !== 'threatfox' && activeTab !== 'urlhaus' && activeTab !== 'c2check' && activeTab !== 'spycheck' && activeTab !== 'darkweb') {
           fetch(`/api/osint/ip?ip=${encodeURIComponent(query)}`)
             .then(r => r.json())
             .then(locData => {
@@ -602,6 +633,397 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
     }
 
 
+
+    // ── THREATFOX ──
+    if (activeTab === 'threatfox') {
+      const iocs = r.data || [];
+      return (
+        <div>
+          <SectionHeader title="THREATFOX IOC INTEL" icon={AlertTriangle} color="#FF1744" />
+          <ResultRow label="IOC" value={r.ioc || query} color="#FF1744" />
+          <ResultRow label="Matches" value={iocs.length} color={iocs.length > 0 ? '#FF1744' : '#00E676'} />
+          {iocs.length === 0 && <div className="mt-2 text-[10px] font-mono text-[#00E676]">No known IOC matches — target appears clean.</div>}
+          {iocs.slice(0, 10).map((item: any, i: number) => (
+            <div key={i} className="mt-1.5 p-2 rounded border border-[#FF1744]/25 bg-[#FF1744]/5">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[9px] font-mono font-bold text-[#FF1744]">{item.malware_printable || item.malware}</span>
+                <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-[#FF1744]/20 text-[#FF1744]">{item.confidence_level}% conf</span>
+              </div>
+              <ResultRow label="Type" value={item.ioc_type} />
+              <ResultRow label="Threat" value={item.threat_type} color="#FF9500" />
+              <ResultRow label="First Seen" value={item.first_seen?.slice(0, 10)} />
+              <ResultRow label="Tags" value={Array.isArray(item.tags) ? item.tags.join(', ') : item.tags} />
+              {item.reference && <a href={item.reference} target="_blank" rel="noreferrer" className="mt-1 flex items-center gap-1 text-[9px] font-mono text-[#FF1744] hover:underline"><ExternalLink className="w-2.5 h-2.5" /> Reference</a>}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // ── URLHAUS ──
+    if (activeTab === 'urlhaus') {
+      const isMalicious = r.query_status === 'is_host' || r.threat || r.url_status === 'online';
+      return (
+        <div>
+          <SectionHeader title="URLHAUS MALWARE CHECK" icon={Wifi} color="#FF6B00" />
+          <ResultRow label="Target" value={r.url || r.host || query} color="#FF6B00" />
+          <div className="my-2">
+            <StatusBadge ok={!isMalicious} label={isMalicious ? `⚠ ${r.threat || 'MALICIOUS'}` : r.query_status === 'no_results' ? 'CLEAN / NOT FOUND' : 'CLEAN'} />
+          </div>
+          {r.url_status && <ResultRow label="URL Status" value={r.url_status} color={r.url_status === 'online' ? '#FF1744' : '#00E676'} />}
+          {r.date_added && <ResultRow label="Reported" value={r.date_added?.slice(0, 10)} />}
+          {r.tags?.length > 0 && <ResultRow label="Tags" value={r.tags.join(', ')} color="#FF9500" />}
+          {r.payloads?.length > 0 && (
+            <div className="mt-2 p-2 rounded border border-[#FF6B00]/25 bg-[#FF6B00]/5">
+              <span className="text-[9px] font-mono text-[#FF6B00] block mb-1">PAYLOADS ({r.payloads.length})</span>
+              {r.payloads.slice(0, 5).map((p: any, i: number) => (
+                <div key={i} className="text-[9px] font-mono text-[var(--text-secondary)] py-0.5">{p.file_type} — {p.signature || 'Unknown'}</div>
+              ))}
+            </div>
+          )}
+          {r.blacklists && (
+            <div className="mt-2 flex gap-2">
+              <StatusBadge ok={r.blacklists.gsb !== 'listed'} label={`GSB: ${r.blacklists.gsb || 'clean'}`} />
+              <StatusBadge ok={r.blacklists.surbl !== 'listed'} label={`SURBL: ${r.blacklists.surbl || 'clean'}`} />
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ── C2 CHECK ──
+    if (activeTab === 'c2check') {
+      const isC2 = r.is_c2;
+      return (
+        <div>
+          <SectionHeader title="BOTNET C2 CHECK" icon={Server} color="#FF3D3D" />
+          <ResultRow label="IP" value={r.ip || query} color="#FF3D3D" />
+          <div className="my-2">
+            <StatusBadge ok={!isC2} label={isC2 ? '⚠ KNOWN C2 SERVER' : 'NOT IN C2 BLOCKLIST'} />
+          </div>
+          {r.feodo_entry && (
+            <div className="mt-2 p-2 rounded border border-[#FF3D3D]/25 bg-[#FF3D3D]/5">
+              <span className="text-[9px] font-mono text-[#FF3D3D] block mb-1">FEODO TRACKER HIT</span>
+              <ResultRow label="Malware" value={r.feodo_entry.malware || 'Unknown'} color="#FF1744" />
+              <ResultRow label="Port" value={r.feodo_entry.port} />
+              <ResultRow label="Status" value={r.feodo_entry.status} color={r.feodo_entry.status === 'online' ? '#FF1744' : '#FFD700'} />
+              <ResultRow label="Country" value={r.feodo_entry.country} />
+              <ResultRow label="AS Name" value={r.feodo_entry.as_name} />
+              <ResultRow label="First Seen" value={r.feodo_entry.first_seen_utc?.slice(0, 10)} />
+            </div>
+          )}
+          {r.ssl_entry && (
+            <div className="mt-2 p-2 rounded border border-[#FF9500]/25 bg-[#FF9500]/5">
+              <span className="text-[9px] font-mono text-[#FF9500] block mb-1">SSL BLACKLIST HIT</span>
+              <ResultRow label="Subject" value={r.ssl_entry.subject} color="#FF9500" />
+            </div>
+          )}
+          <ResultRow label="Last Updated" value={r.last_updated} />
+        </div>
+      );
+    }
+
+    // ── SPYWARE DB ──
+    if (activeTab === 'spycheck') {
+      const matched = r.matched;
+      return (
+        <div>
+          <SectionHeader title="SPYWARE INFRASTRUCTURE DB" icon={Bug} color="#E040FB" />
+          <ResultRow label="Target" value={r.target || query} color="#E040FB" />
+          <div className="my-2">
+            <StatusBadge ok={!matched} label={matched ? `⚠ SPYWARE MATCH: ${r.spyware_name}` : 'NOT IN SPYWARE DB'} />
+          </div>
+          {matched && (
+            <div className="mt-2 p-2 rounded border border-[#E040FB]/30 bg-[#E040FB]/10">
+              <ResultRow label="Spyware" value={r.spyware_name} color="#E040FB" />
+              <ResultRow label="Operator" value={r.operator} color="#FF9500" />
+              <ResultRow label="Confidence" value={r.confidence} />
+              <ResultRow label="Exposed By" value={r.source} />
+              <ResultRow label="Notes" value={r.notes} mono={false} />
+            </div>
+          )}
+          {!matched && r.confidence === 'low' && (
+            <div className="mt-2 text-[9px] font-mono text-[var(--text-muted)]">Target not found in Citizen Lab / Amnesty Tech published indicators. This does not guarantee the target is clean.</div>
+          )}
+        </div>
+      );
+    }
+
+    // ── DARK WEB ──
+    if (activeTab === 'darkweb') {
+      const results_list = r.results || [];
+      const ransomware = r.ransomware_hits || [];
+      return (
+        <div>
+          <SectionHeader title="DARK WEB INTELLIGENCE" icon={Skull} color="#9C27B0" />
+          <ResultRow label="Query" value={r.query || query} color="#9C27B0" />
+          <div className="my-1 p-2 rounded border border-amber-500/30 bg-amber-500/5 text-[9px] font-mono text-amber-300/80">
+            ⚠ Results are aggregated from clearnet dark web indices. No Tor connection required or used.
+          </div>
+          {ransomware.length > 0 && (
+            <>
+              <SectionHeader title={`RANSOMWARE GROUP POSTS (${ransomware.length})`} icon={Skull} color="#FF1744" />
+              {ransomware.slice(0, 5).map((h: any, i: number) => (
+                <div key={i} className="mt-1 p-2 rounded border border-[#FF1744]/20 bg-[#FF1744]/5">
+                  <div className="text-[9px] font-mono font-bold text-[#FF1744]">{h.group_name}</div>
+                  <div className="text-[9px] font-mono text-[var(--text-primary)] mt-0.5">{h.post_title || h.victim}</div>
+                  <div className="text-[8px] font-mono text-[var(--text-muted)]">{h.published?.slice(0, 10)}</div>
+                </div>
+              ))}
+            </>
+          )}
+          {results_list.length > 0 && (
+            <>
+              <SectionHeader title={`SEARCH RESULTS (${results_list.length})`} icon={Globe} color="#9C27B0" />
+              {results_list.slice(0, 8).map((r: any, i: number) => (
+                <div key={i} className="mt-1 p-2 rounded border border-[#9C27B0]/20 bg-[#9C27B0]/5">
+                  <div className="text-[9px] font-mono font-bold text-[#9C27B0] break-all">{r.title || r.link}</div>
+                  {r.description && <div className="text-[8px] font-mono text-[var(--text-muted)] mt-0.5 line-clamp-2">{r.description}</div>}
+                </div>
+              ))}
+            </>
+          )}
+          {results_list.length === 0 && ransomware.length === 0 && renderFallback()}
+        </div>
+      );
+    }
+
+    // ── GREYNOISE ──
+    if (activeTab === 'greynoise') {
+      const isNoise = r.noise;
+      const isRiot = r.riot;
+      const cls = r.classification;
+      const clsColor = cls === 'malicious' ? '#FF3D3D' : cls === 'benign' ? '#00E676' : '#FF9500';
+      return (
+        <div>
+          <SectionHeader title="GREYNOISE INTEL" icon={Radio} color="#FF9500" />
+          <ResultRow label="IP" value={r.ip || query} color="#FF9500" />
+          <div className="flex gap-2 my-2 flex-wrap">
+            <StatusBadge ok={!isNoise} label={isNoise ? 'INTERNET NOISE' : 'NOT NOISY'} />
+            <StatusBadge ok={!!isRiot} label={isRiot ? 'KNOWN BENIGN' : 'UNKNOWN SOURCE'} />
+          </div>
+          <ResultRow label="Classification" value={cls?.toUpperCase()} color={clsColor} />
+          <ResultRow label="Name / Actor" value={r.name} />
+          <ResultRow label="Last Seen" value={r.last_seen} />
+          <ResultRow label="Message" value={r.message} />
+          {r.link && <a href={r.link} target="_blank" rel="noreferrer" className="mt-2 flex items-center gap-1.5 text-[10px] font-mono text-[#FF9500] hover:underline"><ExternalLink className="w-3 h-3" /> View on GreyNoise</a>}
+        </div>
+      );
+    }
+
+    // ── URLSCAN ──
+    if (activeTab === 'urlscan') {
+      const list = r.results || [];
+      return (
+        <div>
+          <SectionHeader title="URLSCAN RESULTS" icon={Globe} color="#448AFF" />
+          <ResultRow label="Query" value={r.query || query} color="#448AFF" />
+          <ResultRow label="Total Found" value={r.total || list.length} />
+          {list.slice(0, 8).map((item: any, i: number) => (
+            <div key={i} className="mt-1.5 p-2 rounded border border-[#448AFF]/20 bg-[#448AFF]/5">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[9px] font-mono font-bold text-[#448AFF] truncate flex-1">{item.page?.domain || item.task?.url}</span>
+                <span className="text-[8px] font-mono text-[var(--text-muted)] ml-2 flex-shrink-0">{item.page?.country}</span>
+              </div>
+              <ResultRow label="URL" value={item.task?.url} />
+              <ResultRow label="IP" value={item.page?.ip} />
+              <ResultRow label="Server" value={item.page?.server} />
+              <ResultRow label="Date" value={item.task?.time?.slice(0, 10)} />
+              {item.screenshotURL && <a href={item.screenshotURL} target="_blank" rel="noreferrer" className="mt-1 flex items-center gap-1 text-[9px] font-mono text-[#448AFF] hover:underline"><ExternalLink className="w-2.5 h-2.5" /> Screenshot</a>}
+            </div>
+          ))}
+          {list.length === 0 && renderFallback()}
+        </div>
+      );
+    }
+
+    // ── WAYBACK ──
+    if (activeTab === 'wayback') {
+      return (
+        <div>
+          <SectionHeader title="WAYBACK MACHINE" icon={Clock} color="#87CEEB" />
+          <ResultRow label="URL" value={query} color="#87CEEB" />
+          <div className="my-2"><StatusBadge ok={!!r.available} label={r.available ? 'ARCHIVED' : 'NOT FOUND'} /></div>
+          {r.closest && (
+            <div className="p-2 rounded border border-[#87CEEB]/20 bg-[#87CEEB]/5">
+              <ResultRow label="Snapshot" value={r.closest.timestamp} color="#87CEEB" />
+              <ResultRow label="Status" value={r.closest.status} color={r.closest.status === '200' ? '#00E676' : '#FF9500'} />
+              {r.closest.url && <a href={r.closest.url} target="_blank" rel="noreferrer" className="mt-1 flex items-center gap-1 text-[9px] font-mono text-[#87CEEB] hover:underline"><ExternalLink className="w-2.5 h-2.5" /> View Snapshot</a>}
+            </div>
+          )}
+          {r.snapshots?.length > 0 && (
+            <>
+              <SectionHeader title={`RECENT SNAPSHOTS (${r.snapshots.length})`} icon={Clock} color="#87CEEB" />
+              <div className="space-y-px mt-1">
+                {r.snapshots.slice(0, 8).map((s: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between py-0.5 px-1 rounded hover:bg-[var(--hover-accent)] text-[9px] font-mono">
+                    <span className="text-[#87CEEB]">{s.timestamp?.slice(0, 12)}</span>
+                    <span className={s.statuscode === '200' ? 'text-[#00E676]' : 'text-[#FF9500]'}>{s.statuscode}</span>
+                    <span className="text-[var(--text-muted)]">{s.mimetype?.split('/')[1]}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      );
+    }
+
+    // ── TOR CHECK ──
+    if (activeTab === 'tor') {
+      const isTor = r.is_tor_exit;
+      return (
+        <div>
+          <SectionHeader title="TOR EXIT NODE CHECK" icon={Shield} color="#9C27B0" />
+          <ResultRow label="IP" value={r.ip || query} color="#9C27B0" />
+          <div className="my-2"><StatusBadge ok={!isTor} label={isTor ? '⚠ TOR EXIT NODE' : 'NOT TOR'} /></div>
+          {r.relay_details && (
+            <div className="p-2 rounded border border-[#9C27B0]/20 bg-[#9C27B0]/5 mt-2">
+              <ResultRow label="Nickname" value={r.relay_details.nickname} />
+              <ResultRow label="Fingerprint" value={r.relay_details.fingerprint} />
+              <ResultRow label="Country" value={r.relay_details.country} />
+              <ResultRow label="Running" value={r.relay_details.running ? 'YES' : 'NO'} color={r.relay_details.running ? '#FF3D3D' : '#00E676'} />
+              <ResultRow label="Bandwidth" value={r.relay_details.bandwidth ? `${r.relay_details.bandwidth} KB/s` : undefined} />
+            </div>
+          )}
+          <ResultRow label="Last Updated" value={r.last_updated} />
+        </div>
+      );
+    }
+
+    // ── PASSIVE DNS ──
+    if (activeTab === 'pdns') {
+      const recs = r.records || [];
+      return (
+        <div>
+          <SectionHeader title="PASSIVE DNS" icon={Server} color="#00BCD4" />
+          <ResultRow label="Query" value={r.query || query} color="#00BCD4" />
+          <ResultRow label="Records" value={recs.length} />
+          <div className="mt-2 space-y-px max-h-[260px] overflow-y-auto styled-scrollbar">
+            {recs.slice(0, 30).map((rec: any, i: number) => (
+              <div key={i} className="flex items-start gap-2 py-1 border-b border-[var(--border-secondary)]/10 last:border-0">
+                <span className="text-[8px] font-mono text-[#00BCD4] w-8 flex-shrink-0 pt-0.5">{rec.rrtype || rec.type}</span>
+                <span className="text-[9px] font-mono text-[var(--text-primary)] flex-1 break-all">{rec.rdata || rec.rrvalue || rec.value}</span>
+                {rec.count && <span className="text-[8px] font-mono text-[var(--text-muted)] flex-shrink-0">×{rec.count}</span>}
+              </div>
+            ))}
+          </div>
+          {recs.length === 0 && renderFallback()}
+        </div>
+      );
+    }
+
+    // ── REVERSE IP ──
+    if (activeTab === 'reverseip') {
+      const domains = r.domains || [];
+      return (
+        <div>
+          <SectionHeader title="REVERSE IP LOOKUP" icon={MapPin} color="#FF3D3D" />
+          <ResultRow label="IP" value={r.ip || query} color="#FF3D3D" />
+          <ResultRow label="Domains Found" value={r.total || domains.length} color={domains.length > 0 ? '#FF9500' : '#00E676'} />
+          <ResultRow label="Sources" value={Array.isArray(r.sources) ? r.sources.join(', ') : r.sources} />
+          {domains.length > 0 && (
+            <div className="mt-2 p-2 border border-[#FF3D3D]/20 bg-[#FF3D3D]/5 rounded max-h-[200px] overflow-y-auto styled-scrollbar">
+              {domains.slice(0, 60).map((d: string, i: number) => (
+                <div key={i} className="text-[9px] font-mono text-[var(--text-primary)] py-0.5 border-b border-[var(--border-secondary)]/10 last:border-0">{d}</div>
+              ))}
+              {domains.length > 60 && <div className="text-[8px] font-mono text-[var(--text-muted)] mt-1">+{domains.length - 60} more</div>}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ── ASN LOOKUP ──
+    if (activeTab === 'asn') {
+      return (
+        <div>
+          <SectionHeader title="ASN / BGP INTELLIGENCE" icon={Network} color="#D4AF37" />
+          <ResultRow label="Resource" value={r.asn ? `AS${r.asn}` : r.resource || query} color="#D4AF37" />
+          <ResultRow label="Name" value={r.name} />
+          <ResultRow label="Description" value={r.description} />
+          <ResultRow label="Country" value={r.country} />
+          {r.prefixes && (
+            <div className="mt-1.5 p-2 rounded border border-[#D4AF37]/20 bg-[#D4AF37]/5">
+              <span className="text-[8px] font-mono text-[#D4AF37] block mb-1">IPv4 PREFIXES ({r.prefixes.ipv4_count || (r.prefixes.ipv4 || []).length})</span>
+              {(r.prefixes.ipv4 || []).slice(0, 5).map((p: any, i: number) => (
+                <div key={i} className="text-[9px] font-mono text-[var(--text-secondary)]">{p.prefix} — {p.name || ''}</div>
+              ))}
+            </div>
+          )}
+          {r.upstreams?.length > 0 && (
+            <div className="mt-1.5 p-2 rounded border border-[#D4AF37]/20 bg-[#D4AF37]/5">
+              <span className="text-[8px] font-mono text-[#D4AF37] block mb-1">UPSTREAM PROVIDERS</span>
+              {r.upstreams.slice(0, 5).map((u: any, i: number) => (
+                <div key={i} className="text-[9px] font-mono text-[var(--text-secondary)]">AS{u.asn} — {u.name}</div>
+              ))}
+            </div>
+          )}
+          {r.routing_stats && <ResultRow label="Route Visibility" value={r.routing_stats.visibility ? `${r.routing_stats.visibility}%` : undefined} />}
+        </div>
+      );
+    }
+
+    // ── OTX INTEL ──
+    if (activeTab === 'otx') {
+      if (r.code === 'NO_API_KEY') return (
+        <div className="p-3 rounded border border-amber-500/30 bg-amber-500/10">
+          <div className="text-[10px] font-mono text-amber-400 font-bold mb-1">OTX_API_KEY NOT CONFIGURED</div>
+          <div className="text-[9px] font-mono text-amber-300/70">Set OTX_API_KEY in your .env file. Get a free key at otx.alienvault.com</div>
+        </div>
+      );
+      return (
+        <div>
+          <SectionHeader title="ALIENVAULT OTX" icon={ShieldAlert} color="#FF6B00" />
+          <ResultRow label="Indicator" value={r.indicator || query} color="#FF6B00" />
+          <ResultRow label="Pulse Count" value={r.pulse_count} color={(r.pulse_count || 0) > 0 ? '#FF3D3D' : '#00E676'} />
+          <ResultRow label="Reputation" value={r.reputation} color={(r.reputation || 0) < 0 ? '#FF3D3D' : '#00E676'} />
+          <ResultRow label="Type" value={r.type} />
+          {r.tags?.length > 0 && <ResultRow label="Tags" value={r.tags.join(', ')} color="#FF9500" />}
+          {r.malware_families?.length > 0 && (
+            <div className="mt-1.5 p-2 rounded border border-[#FF6B00]/30 bg-[#FF6B00]/10">
+              <span className="text-[8px] font-mono text-[#FF6B00] block mb-1">MALWARE FAMILIES</span>
+              {r.malware_families.slice(0, 5).map((f: string, i: number) => (
+                <div key={i} className="text-[9px] font-mono text-[var(--text-primary)]">{f}</div>
+              ))}
+            </div>
+          )}
+          {renderFallbackExcluding(['indicator','pulse_count','reputation','type','tags','malware_families','code'])}
+        </div>
+      );
+    }
+
+    // ── VIRUSTOTAL ──
+    if (activeTab === 'virustotal') {
+      if (r.code === 'NO_API_KEY') return (
+        <div className="p-3 rounded border border-amber-500/30 bg-amber-500/10">
+          <div className="text-[10px] font-mono text-amber-400 font-bold mb-1">VIRUSTOTAL_API_KEY NOT CONFIGURED</div>
+          <div className="text-[9px] font-mono text-amber-300/70">Set VIRUSTOTAL_API_KEY in your .env file. Free tier: 4 req/min at virustotal.com</div>
+        </div>
+      );
+      const stats = r.last_analysis_stats || {};
+      const malicious = stats.malicious || 0;
+      const total = Object.values(stats).reduce((a: any, b: any) => a + (b as number), 0) as number;
+      return (
+        <div>
+          <SectionHeader title="VIRUSTOTAL ANALYSIS" icon={Bug} color="#2196F3" />
+          <ResultRow label="Resource" value={r.id || query} color="#2196F3" />
+          <div className="my-2"><StatusBadge ok={malicious === 0} label={malicious > 0 ? `${malicious}/${total} MALICIOUS` : 'CLEAN'} /></div>
+          <ResultRow label="Reputation" value={r.reputation} color={(r.reputation || 0) < 0 ? '#FF3D3D' : '#00E676'} />
+          {r.categories && Object.keys(r.categories).length > 0 && <ResultRow label="Categories" value={Object.values(r.categories).join(', ')} />}
+          {total > 0 && (
+            <div className="mt-1.5 p-2 rounded border border-[#2196F3]/20 bg-[#2196F3]/5 text-[9px] font-mono">
+              <div className="flex justify-between">
+                <span className="text-red-400">Malicious: {stats.malicious || 0}</span>
+                <span className="text-amber-400">Suspicious: {stats.suspicious || 0}</span>
+                <span className="text-green-400">Clean: {stats.undetected || 0}</span>
+              </div>
+            </div>
+          )}
+          {renderFallbackExcluding(['id','reputation','categories','last_analysis_stats','code'])}
+        </div>
+      );
+    }
 
     // Fallback for other tools
     return renderFallback();

@@ -7,17 +7,78 @@ import crypto from 'crypto';
  * to traditional intelligence sources if Telegram blocks the IP.
  */
 
+// ── Telegram OSINT channels (public, no login required) ──
+// Covers: Ukraine war, Middle East, cyber warfare, hacktivists, global conflicts
 const TELEGRAM_CHANNELS = [
-  'OSINTtechnical',
-  'Faytuks',
-  'Liveuamap',
-  'CyberKnow'
+  // War/conflict monitors
+  'OSINTtechnical',    // OSINT Technical
+  'Faytuks',           // Faytuk's War Monitor
+  'Liveuamap',         // Live UA Map
+  'RALee85',           // Rob Lee (defense analyst)
+  'TheDeepStateCom',   // Deep State Map Ukraine
+  'wartranslated',     // War Translated
+  'Gerashchenko_en',   // Anton Gerashchenko
+  'nexta_tv',          // NEXTA (Belarus/Eastern Europe)
+  'conflictnews',      // Conflict News
+  'militaryosint',     // Military OSINT
+  'intelslava',        // Intel Slava Z
+  // Cyber/hacktivism
+  'CyberKnow',         // Cyber threat intel
+  'GhostSecOfficial',  // GhostSec hacktivist group
+  'YourAnonNews',      // Anonymous news
+  'AnonymousTV501',    // Anonymous TV
+  'cyberknow20',       // Cyber threat researcher
+  // Middle East / Global
+  'MEE_conflicts',     // Middle East Eye conflicts
+  'IsraelWarRoom',     // Israel-Palestine conflict OSINT
+  'IntelSlava',        // Conflict intel
+  'eIntelligence',     // Electronic intelligence
+  // Intelligence/OSINT
+  'OSINT_team',        // OSINT Team
+  'osint_defenders',   // OSINT Defenders
+  'Bellingcat',        // Bellingcat investigations
+  'IntelligenceAlerts', // Intelligence alerts
 ];
 
-const FALLBACK_FEEDS = {
-  BBC: 'https://feeds.bbci.co.uk/news/world/rss.xml',
-  AlJazeera: 'https://www.aljazeera.com/xml/rss/all.xml',
-  GDACS: 'https://www.gdacs.org/xml/rss.xml'
+// ── Comprehensive RSS feeds — 25+ sources across regions ──
+const RSS_FEEDS: Record<string, string> = {
+  // Global wire services
+  'Reuters World':     'https://feeds.reuters.com/reuters/worldNews',
+  'AP News':           'https://rsshub.app/apnews/topics/apf-intlnews',
+  'AFP':               'https://rsshub.app/afp/en/world',
+  'BBC World':         'https://feeds.bbci.co.uk/news/world/rss.xml',
+  // Defense & security
+  'Defense News':      'https://www.defensenews.com/arc/outboundfeeds/rss/category/global/?outputType=xml',
+  'War on the Rocks':  'https://warontherocks.com/feed/',
+  'Bellingcat':        'https://www.bellingcat.com/feed/',
+  'RUSI':              'https://www.rusi.org/rss.xml',
+  'USNI News':         'https://news.usni.org/feed',
+  'Breaking Defense':  'https://breakingdefense.com/feed/',
+  'Task & Purpose':    'https://taskandpurpose.com/feed/',
+  'The Drive':         'https://www.thedrive.com/feeds/all.rss',
+  'Lawfare':           'https://www.lawfaremedia.org/feed',
+  // Middle East
+  'Al Jazeera':        'https://www.aljazeera.com/xml/rss/all.xml',
+  'Middle East Eye':   'https://www.middleeasteye.net/rss',
+  'Jerusalem Post':    'https://www.jpost.com/rss/rssfeedsfrontpage.aspx',
+  'Haaretz':           'https://www.haaretz.com/cmlink/1.628752',
+  // Russia / Ukraine
+  'Kyiv Independent': 'https://kyivindependent.com/rss/',
+  'Meduza EN':         'https://meduza.io/rss/en/all',
+  'UA Pravda EN':      'https://www.pravda.com.ua/eng/rss/',
+  // Asia / Pacific
+  'South China Morning Post': 'https://www.scmp.com/rss/91/feed',
+  'Nikkei Asia':       'https://asia.nikkei.com/rss/feed/nar',
+  'The Diplomat':      'https://thediplomat.com/feed/',
+  'NK News':           'https://www.nknews.org/feed/',
+  // Cyber / OSINT
+  'Krebs on Security': 'https://krebsonsecurity.com/feed/',
+  'The Hacker News':   'https://feeds.feedburner.com/TheHackersNews',
+  'BleepingComputer':  'https://www.bleepingcomputer.com/feed/',
+  'Dark Reading':      'https://www.darkreading.com/rss.xml',
+  // Humanitarian
+  'ReliefWeb':         'https://reliefweb.int/updates/rss.xml?source=unhcr',
+  'GDACS':             'https://www.gdacs.org/xml/rss.xml',
 };
 
 const RISK_KEYWORDS = ['war','missile','strike','attack','crisis','tension','military','conflict','defense','clash','nuclear','invasion','bomb','drone','weapon','sanctions','ceasefire','escalation', 'killed', 'destroyed', 'operation', 'casualty', 'frontline', 'threat'];
@@ -120,21 +181,21 @@ export async function GET() {
       if (result.status === 'fulfilled') allArticles.push(...result.value);
     }
 
-    // FAILSAFE: If Telegram completely blocks the IP, fall back to traditional RSS
-    if (allArticles.length === 0) {
-      const fallbackPromises = Object.entries(FALLBACK_FEEDS).map(async ([source, url]) => {
-        try {
-          const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-          if (!res.ok) return [];
-          const xml = await res.text();
-          return parseRSSItems(xml, source).slice(0, 5);
-        } catch { return []; }
-      });
-      
-      const fallbackResults = await Promise.allSettled(fallbackPromises);
-      for (const result of fallbackResults) {
-        if (result.status === 'fulfilled') allArticles.push(...result.value);
-      }
+    // Always fetch RSS feeds in parallel with Telegram (not just as fallback)
+    const rssPromises = Object.entries(RSS_FEEDS).map(async ([source, url]) => {
+      try {
+        const res = await fetch(url, {
+          signal: AbortSignal.timeout(6000),
+          headers: { 'Accept': 'application/rss+xml, text/xml, application/xml', 'User-Agent': 'Mozilla/5.0 OSIRIS/4.2' },
+        });
+        if (!res.ok) return [];
+        const xml = await res.text();
+        return parseRSSItems(xml, source).slice(0, 6);
+      } catch { return []; }
+    });
+    const rssResults = await Promise.allSettled(rssPromises);
+    for (const result of rssResults) {
+      if (result.status === 'fulfilled') allArticles.push(...result.value);
     }
 
     const newsItems = allArticles.map(article => {

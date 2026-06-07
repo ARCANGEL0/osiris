@@ -1,0 +1,220 @@
+import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
+
+const SPYWARE_OPERATORS = [
+  {
+    id: 'nso-group',
+    name: 'NSO Group Technologies',
+    lat: 32.0853, lng: 34.7818,
+    country: 'Israel',
+    spyware_name: 'Pegasus',
+    status: 'active' as const,
+    target_os: 'iOS / Android',
+    known_customers: [
+      'Saudi Arabia', 'UAE', 'Mexico', 'India', 'Morocco', 'Rwanda',
+      'Bahrain', 'Kazakhstan', 'Azerbaijan', 'Hungary', 'Spain',
+      'El Salvador', 'Togo', 'Ivory Coast', 'Ghana',
+    ],
+    exposed_by: 'Citizen Lab, Amnesty International, Forbidden Stories (Pegasus Project)',
+    exposure_date: '2016',
+    notes: 'World\'s most deployed commercial spyware; zero-click iOS exploits (FORCEDENTRY CVE-2021-30860); US Entity List sanction (Nov 2021). Exploits iOS zero-days; C2 infra uses cloud providers (AWS, Linode, Digital Ocean) with rotating scdn-pattern domains.',
+  },
+  {
+    id: 'intellexa-predator',
+    name: 'Intellexa Alliance (formerly Cytrox)',
+    lat: 37.9838, lng: 23.7275,
+    country: 'Greece / EU',
+    spyware_name: 'Predator',
+    status: 'sanctioned' as const,
+    target_os: 'iOS / Android',
+    known_customers: [
+      'Egypt', 'Greece', 'Indonesia', 'Madagascar', 'Oman',
+      'Saudi Arabia', 'Serbia', 'Vietnam',
+    ],
+    exposed_by: 'Citizen Lab, EU Parliament inquiry, Meta Threat Intelligence',
+    exposure_date: '2021',
+    notes: 'IMSI-catcher + zero-click spyware; sold as Intellexa Alliance from Athens; US Treasury/Commerce sanctions (2024). Predator uses Alien loader and Aladdin injector for iOS exploitation.',
+  },
+  {
+    id: 'candiru',
+    name: 'Candiru (Saito Tech)',
+    lat: 32.0853, lng: 34.7818,
+    country: 'Israel',
+    spyware_name: 'DevilsTongue / Sherlock',
+    status: 'sanctioned' as const,
+    target_os: 'Windows / iOS / Android',
+    known_customers: [
+      'Saudi Arabia', 'UAE', 'Singapore', 'Uzbekistan', 'Qatar',
+      'Hungary', 'Turkey',
+    ],
+    exposed_by: 'Microsoft MSTIC, Citizen Lab (July 2021)',
+    exposure_date: '2021',
+    notes: 'Windows-specialist spyware; exploited CVE-2021-31979 and CVE-2021-33771 zero-days; US Entity List (Nov 2021). Sold by headcount (100 devices, 500 devices, unlimited tiers).',
+  },
+  {
+    id: 'paragon-solutions',
+    name: 'Paragon Solutions',
+    lat: 32.7940, lng: 34.9896,
+    country: 'Israel',
+    spyware_name: 'Graphite',
+    status: 'active' as const,
+    target_os: 'iOS / Android',
+    known_customers: [
+      'Italy', 'Cyprus', 'Denmark', 'Singapore', 'Canada',
+    ],
+    exposed_by: 'Citizen Lab, Amnesty International (2025)',
+    exposure_date: '2025',
+    notes: 'Marketed as targeting criminals/terrorists; Graphite exploits WhatsApp; Italian government used against journalists. Paragon acquisition by AE Industrial Partners (US PE) noted by researchers.',
+  },
+  {
+    id: 'finfisher-gamma',
+    name: 'Gamma Group / FinFisher',
+    lat: 48.1351, lng: 11.5820,
+    country: 'Germany / UK',
+    spyware_name: 'FinSpy / FinFisher',
+    status: 'defunct' as const,
+    target_os: 'Windows / Linux / macOS / iOS / Android',
+    known_customers: [
+      'Bahrain', 'Bangladesh', 'Ethiopia', 'Vietnam', 'UAE',
+      'Pakistan', 'Qatar', 'Morocco', 'Malaysia', 'Mexico',
+    ],
+    exposed_by: 'Citizen Lab, Chaos Computer Club, WikiLeaks SpyFiles',
+    exposure_date: '2012',
+    notes: 'Pioneer commercial spyware used against Arab Spring activists; leaked by WikiLeaks 2011-2014; Bavarian police seized servers 2021. German operations shut down after raids.',
+  },
+  {
+    id: 'hacking-team',
+    name: 'Hacking Team (HT Srl)',
+    lat: 45.4642, lng: 9.1900,
+    country: 'Italy',
+    spyware_name: 'Remote Control System (RCS / Da Vinci / Galileo)',
+    status: 'defunct' as const,
+    target_os: 'Windows / macOS / Linux / iOS / Android / BlackBerry',
+    known_customers: [
+      'Sudan', 'Ethiopia', 'Morocco', 'UAE', 'Azerbaijan', 'Saudi Arabia',
+      'Egypt', 'Uzbekistan', 'Italy', 'Mexico', 'Kazakhstan',
+    ],
+    exposed_by: 'Citizen Lab, WikiLeaks (400GB hack-and-leak 2015)',
+    exposure_date: '2014',
+    notes: 'Hacked by Phineas Fisher (2015); 400GB internal data leaked; sold to Sudan despite UN arms embargo. Company effectively defunct after breach; key staff dispersed.',
+  },
+  {
+    id: 'cytrox',
+    name: 'Cytrox ( Македонија)',
+    lat: 41.9981, lng: 21.4254,
+    country: 'North Macedonia / Israel',
+    spyware_name: 'Predator (original developer)',
+    status: 'defunct' as const,
+    target_os: 'iOS / Android',
+    known_customers: [
+      'Egypt', 'Armenia', 'Greece', 'Indonesia', 'Madagascar', 'Oman',
+    ],
+    exposed_by: 'Citizen Lab (Dec 2021), Meta (2021)',
+    exposure_date: '2021',
+    notes: 'Original Predator developer founded in Skopje; acquired by Tal Dilian to form Intellexa Alliance. Cytrox SA dissolved; IP transferred to Intellexa holding structure.',
+  },
+  {
+    id: 'quadream',
+    name: 'QuaDream',
+    lat: 32.0704, lng: 34.8244,
+    country: 'Israel',
+    spyware_name: 'Reign (ENDOFDAYS exploit)',
+    status: 'defunct' as const,
+    target_os: 'iOS',
+    known_customers: [
+      'Saudi Arabia', 'Mexico', 'Ghana', 'Indonesia', 'Morocco',
+    ],
+    exposed_by: 'Citizen Lab, Microsoft (2023)',
+    exposure_date: '2023',
+    notes: 'Used zero-click ENDOFDAYS calendar exploit against iOS; company dissolved April 2023 after Citizen Lab/Microsoft exposure. Ramat Gan-based; staff included former NSO employees.',
+  },
+  {
+    id: 'dsirf-subzero',
+    name: 'DSIRF GmbH',
+    lat: 48.2082, lng: 16.3738,
+    country: 'Austria',
+    spyware_name: 'Subzero',
+    status: 'active' as const,
+    target_os: 'Windows',
+    known_customers: [
+      'Austria', 'United Kingdom', 'Panama',
+    ],
+    exposed_by: 'Microsoft MSTIC (July 2022)',
+    exposure_date: '2022',
+    notes: 'Austrian firm selling to European clients; exploited CVE-2022-22047 Windows CLFS zero-day. Marketed as "decision intelligence"; clients in law firm and banking sectors.',
+  },
+  {
+    id: 'rcs-lab-hermit',
+    name: 'RCS Lab',
+    lat: 45.4642, lng: 9.1900,
+    country: 'Italy',
+    spyware_name: 'Hermit',
+    status: 'active' as const,
+    target_os: 'Android / iOS',
+    known_customers: [
+      'Italy', 'Kazakhstan',
+    ],
+    exposed_by: 'Lookout, Google TAG (June 2022)',
+    exposure_date: '2022',
+    notes: 'Italian ISP-cooperating delivery via fake app; worked with ISPs to disable mobile data, then tricked victims into downloading "fix". Used by Italian law enforcement and Kazakh authorities.',
+  },
+  {
+    id: 'mollitiam',
+    name: 'Mollitiam Industries',
+    lat: 40.4168, lng: -3.7038,
+    country: 'Spain',
+    spyware_name: 'Invisible Man / ClearScope',
+    status: 'active' as const,
+    target_os: 'Android / Windows',
+    known_customers: [
+      'Spain', 'Colombia', 'Chile',
+    ],
+    exposed_by: 'EL PAIS investigation (2022), Privacy International',
+    exposure_date: '2022',
+    notes: 'Madrid-based; sold Android spyware marketed for law enforcement. Claims targeting drug trafficking and organized crime; questionable oversight.',
+  },
+  {
+    id: 'circles-nso',
+    name: 'Circles (NSO Group affiliate)',
+    lat: 42.6977, lng: 23.3219,
+    country: 'Bulgaria (shell) / Israel (ops)',
+    spyware_name: 'Circles SS7 Attack System',
+    status: 'active' as const,
+    target_os: 'All (SS7 network-level)',
+    known_customers: [
+      'Saudi Arabia', 'UAE', 'Nigeria', 'Chile', 'Ecuador',
+      'Mexico', 'Peru', 'Thailand', 'El Salvador', 'Ivory Coast',
+    ],
+    exposed_by: 'Citizen Lab (Dec 2020)',
+    exposure_date: '2020',
+    notes: 'Exploits SS7 telecom signaling to geolocate and intercept calls/SMS; no device exploit needed. Merged with NSO Group ~2014; infrastructure distributed across 25 countries.',
+  },
+  {
+    id: 'cobwebs-technologies',
+    name: 'Cobwebs Technologies',
+    lat: 32.0853, lng: 34.7818,
+    country: 'Israel',
+    spyware_name: 'WebLoc / PATROL (OSINT + tracking platform)',
+    status: 'active' as const,
+    target_os: 'Web / OSINT platform',
+    known_customers: [
+      'US (ICE, NYPD, FBI contracts)', 'Dominican Republic',
+    ],
+    exposed_by: 'Motherboard/Vice (2021), DHS OIG report',
+    exposure_date: '2021',
+    notes: 'Sold location tracking and OSINT platform to US law enforcement; ICE used Cobwebs to track immigrants. No warrant required for open-source location tracking product.',
+  },
+];
+
+export async function GET() {
+  try {
+    const operators = SPYWARE_OPERATORS.map(o => ({ ...o }));
+    return NextResponse.json(
+      { operators, total: operators.length, timestamp: new Date().toISOString() },
+      { headers: { 'Cache-Control': 'public, s-maxage=86400' } }
+    );
+  } catch {
+    return NextResponse.json({ data: [] }, { status: 500 });
+  }
+}
